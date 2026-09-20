@@ -47,6 +47,8 @@ screenshots/
 *.png
 *.jpg
 *.jpeg
+!docs/assets/*.png
+!docs/assets/*.jpg
 
 # IDE & OS
 .DS_Store

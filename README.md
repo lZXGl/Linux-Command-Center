@@ -4,6 +4,10 @@ A modern, fast, modular **web-based Command Center** for home servers, homelabs,
 
 Designed to work dynamically out of the box on any Linux distribution with zero hardcoded paths or environment-specific dependencies.
 
+<p align="center">
+  <img src="docs/assets/dashboard_preview.png" alt="Linux Command Center Dashboard" width="100%" />
+</p>
+
 ---
 
 ## Features
