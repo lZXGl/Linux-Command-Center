@@ -49,7 +49,7 @@ Designed to work dynamically out of the box on any Linux distribution with zero 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/linux-command-center.git
+git clone https://github.com/lZXGl/linux-command-center.git
 cd linux-command-center
 ```
 
