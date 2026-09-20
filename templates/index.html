@@ -57,7 +57,7 @@
                         <i class="fa-solid fa-bars-progress" style="color:var(--accent-cyan)"></i>
                         <strong id="header-active-tasks">Active Tasks: 0</strong>
                     </div>
-                    <div class="tasks-pill pill-quick-actions" style="border-color: rgba(6, 182, 212, 0.4); background: rgba(6, 182, 212, 0.12); cursor: pointer;" title="Quick Actions & Wall Tablet Controls" onclick="openQuickActionModal()">
+                    <div class="tasks-pill pill-quick-actions" style="border-color: rgba(6, 182, 212, 0.4); background: rgba(6, 182, 212, 0.12); cursor: pointer;" title="Quick Actions & System Controls" onclick="openQuickActionModal()">
                         <i class="fa-solid fa-bolt-lightning" style="color: var(--accent-cyan);"></i>
                         <strong style="color: #67e8f9;">Quick Actions</strong>
                     </div>
@@ -339,9 +339,14 @@
 
             <!-- Recent Incidents Feed -->
             <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem;">
-                <div style="font-size: 0.82rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+                <div style="font-size: 0.82rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
                     <span><i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-cyan);"></i> Recent Auto-Recovery Incidents</span>
-                    <span id="watchdog-last-check-label" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: normal;">Checking...</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span id="watchdog-last-check-label" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: normal;">Checking...</span>
+                        <button class="btn btn-secondary" onclick="clearWatchdogIncidents()" style="font-size: 0.72rem; padding: 0.2rem 0.55rem; line-height: 1;" title="Clear incident history">
+                            <i class="fa-solid fa-trash"></i> Clear
+                        </button>
+                    </div>
                 </div>
                 <div id="watchdog-incidents-container" style="font-size: 0.82rem; color: var(--text-secondary);">
                     <div class="skeleton-row" style="height: 28px; margin-bottom: 6px;"></div>
@@ -433,28 +438,6 @@
                 <button class="btn btn-secondary" onclick="triggerReboot()" style="width: 100%; justify-content: center; border-color: rgba(239, 68, 68, 0.4); color: var(--accent-red);">
                     <i class="fa-solid fa-power-off"></i> Reboot Server
                 </button>
-            </div>
-
-            <!-- Wall Tablet Kiosk Card -->
-            <div style="background: rgba(16, 185, 129, 0.08); backdrop-filter: blur(16px); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(16, 185, 129, 0.3); display: flex; flex-direction: column; justify-content: space-between; gap: 1rem;">
-                <div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <i class="fa-solid fa-tablet-screen-button" style="color: #10b981; font-size: 1.3rem;"></i>
-                            <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">Wall Tablet Kiosk</h3>
-                        </div>
-                        <span class="count-pill" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3);">Active</span>
-                    </div>
-                    <p style="font-size: 0.82rem; color: var(--text-secondary);">Android 4.0.4 wall mount display at: <strong style="color: #6ee7b7;">/lite</strong></p>
-                </div>
-                <div style="display: flex; gap: 0.5rem;">
-                    <a href="/lite" target="_blank" class="btn btn-secondary" style="flex: 1; justify-content: center; font-size: 0.8rem; text-decoration: none; border-color: rgba(16, 185, 129, 0.4); color: #6ee7b7;">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Kiosk
-                    </a>
-                    <button class="btn btn-secondary" onclick="remoteReloadKiosk()" style="flex: 1; justify-content: center; font-size: 0.8rem; border-color: rgba(59, 130, 246, 0.4); color: #60a5fa;">
-                        <i class="fa-solid fa-arrows-rotate"></i> Reload Screen
-                    </button>
-                </div>
             </div>
         </div>
 

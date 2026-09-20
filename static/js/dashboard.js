@@ -3305,35 +3305,56 @@ if __name__ == "__main__":
             const res = await fetch('/api/network/security');
             const data = await res.json();
 
+            const ifaces = data.interfaces || {};
+            const ifaceEntries = Object.entries(ifaces);
+            const ifacesHtml = ifaceEntries.length > 0 
+                ? ifaceEntries.map(([name, ip]) => `
+                    <div class="stat-pill" title="Network Interface ${escapeHtml(name)}">
+                        <i class="fa-solid fa-network-wired" style="color:var(--accent-cyan)"></i> ${escapeHtml(name)}: <strong>${escapeHtml(ip)}</strong>
+                    </div>
+                `).join('')
+                : `<div class="stat-pill"><i class="fa-solid fa-network-wired" style="color:var(--accent-cyan)"></i> Local: <strong>127.0.0.1</strong></div>`;
+
+            const ports = data.open_ports || [];
+            const portsHtml = ports.length > 0 
+                ? ports.map(p => `
+                    <tr>
+                        <td><span class="count-pill" style="font-size:0.72rem; font-weight:700;">${escapeHtml(p.proto)}</span></td>
+                        <td style="font-family:'JetBrains Mono', monospace; font-weight:600; color:var(--accent-cyan);">${escapeHtml(p.local)}</td>
+                        <td style="color:#fff; font-weight:600;">${escapeHtml(p.process || p.state || 'Active')}</td>
+                    </tr>
+                `).join('')
+                : `<tr><td colspan="3" style="text-align:center; color:var(--text-secondary); padding:1rem;">No public listening ports detected.</td></tr>`;
+
             container.innerHTML = `
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                    <div class="stat-pill" title="Network Table 200 Interface"><i class="fa-solid fa-network-wired" style="color:var(--accent-cyan)"></i> enp3s0: <strong>${data.enp3s0_ip}</strong></div>
-                    <div class="stat-pill" title="Network Table 201 Interface"><i class="fa-solid fa-network-wired" style="color:var(--accent-amber)"></i> eno1: <strong>${data.eno1_ip}</strong></div>
-                    <div class="stat-pill" title="UFW Shield Status"><i class="fa-solid fa-shield-halved" style="color:var(--accent-green)"></i> UFW Firewall: <strong>${data.ufw_status}</strong></div>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                    ${ifacesHtml}
+                    <div class="stat-pill" title="UFW Firewall Shield Status">
+                        <i class="fa-solid fa-shield-halved" style="color:var(--accent-green)"></i> UFW Firewall: <strong>${escapeHtml(data.ufw_status || 'Enforced')}</strong>
+                    </div>
                 </div>
 
-                <div style="font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Active Listening Ports & Bound Services:</div>
-                <table class="history-table" style="font-size: 0.8rem;">
-                    <thead>
-                        <tr>
-                            <th>Protocol</th>
-                            <th>Bound Local Address / Port</th>
-                            <th>Process Info</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${data.open_ports.map(p => `
+                <div style="font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+                    <span><i class="fa-solid fa-circle-nodes" style="color:var(--accent-cyan); margin-right:0.35rem;"></i> Active Listening Ports &amp; Services:</span>
+                    <span class="count-pill" style="font-size:0.75rem;">${ports.length} ports</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="history-table" style="font-size: 0.8rem; width:100%;">
+                        <thead>
                             <tr>
-                                <td><span class="count-pill" style="font-size:0.72rem;">${p.proto}</span></td>
-                                <td style="font-family:'JetBrains Mono', monospace; font-weight:600; color:var(--accent-cyan);">${p.local}</td>
-                                <td style="color:var(--text-secondary);">${p.process}</td>
+                                <th style="width:90px;">Protocol</th>
+                                <th>Bound Local Address / Port</th>
+                                <th>Service / State</th>
                             </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            ${portsHtml}
+                        </tbody>
+                    </table>
+                </div>
             `;
         } catch (e) {
-            container.innerHTML = `<div style="color:var(--accent-red);">Error loading network security info.</div>`;
+            container.innerHTML = `<div style="color:var(--accent-red); padding:1rem;">Error loading network security info.</div>`;
         }
     }
 
@@ -4580,17 +4601,17 @@ ${data.analysis || 'Analysis could not be generated.'}
             if (incidentsContainer) {
                 const incidents = data.incidents || [];
                 if (incidents.length === 0) {
-                    incidentsContainer.innerHTML = `<div style="color:var(--text-secondary); font-size:0.8rem; padding:0.25rem 0;"><i class="fa-solid fa-check" style="color:var(--accent-green); margin-right:0.4rem;"></i> No recent crashes or auto-healing events. All systems stable.</div>`;
+                    incidentsContainer.innerHTML = `<div style="color:var(--accent-green); font-size:0.82rem; padding:0.4rem 0; display:flex; align-items:center; gap:0.45rem;"><i class="fa-solid fa-circle-check"></i> All monitored daemons healthy. Zero recovery incidents.</div>`;
                 } else {
                     incidentsContainer.innerHTML = incidents.slice(0, 5).map(inc => `
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.8rem;">
                             <div>
-                                <span style="font-weight:700; color:#fff;">${escapeHtml(inc.target)}</span>
-                                <span style="color:var(--text-secondary); margin-left:0.5rem;">${escapeHtml(inc.reason || 'Crashed / Unreachable')}</span>
+                                <span style="font-weight:700; color:#fff;">${escapeHtml(inc.target || inc.name || 'Service')}</span>
+                                <span style="color:var(--text-secondary); margin-left:0.5rem;">${escapeHtml(inc.reason || inc.action || 'Incident')}</span>
                             </div>
                             <div style="display:flex; align-items:center; gap:0.5rem;">
-                                <span class="count-pill" style="font-size:0.7rem; color:var(--accent-green); border-color:rgba(16,185,129,0.3);">${escapeHtml(inc.action)}</span>
-                                <span style="font-size:0.72rem; color:var(--text-secondary);">${escapeHtml(inc.timestamp)}</span>
+                                <span class="count-pill" style="font-size:0.7rem; color:${inc.result === 'Success' ? 'var(--accent-green)' : 'var(--accent-red)'}; border-color:${inc.result === 'Success' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};">${escapeHtml(inc.action)}</span>
+                                <span style="font-size:0.72rem; color:var(--text-secondary);">${escapeHtml(inc.timestamp || '')}</span>
                             </div>
                         </div>
                     `).join('');
@@ -4600,6 +4621,21 @@ ${data.analysis || 'Analysis could not be generated.'}
             if (grid) grid.innerHTML = `<div style="color:var(--accent-red); font-size:0.82rem;">Failed to fetch watchdog telemetry.</div>`;
         }
     }
+
+    window.clearWatchdogIncidents = async function() {
+        try {
+            const res = await fetch('/api/homelab/watchdog/clear-incidents', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                showToast('Incident history cleared!', 'success');
+                loadWatchdogStatus();
+            } else {
+                showToast(data.error || 'Failed to clear incidents', 'error');
+            }
+        } catch (e) {
+            showToast('Error clearing incidents', 'error');
+        }
+    };
 
     async function toggleWatchdogAction() {
         try {
@@ -5083,35 +5119,9 @@ ${data.analysis || 'Analysis could not be generated.'}
                         <span>SMART Storage</span>
                     </button>
                 </div>
-
-                <!-- Tablet / Kiosk Mode -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
-                    <a href="/lite" target="_blank" class="btn btn-secondary" style="justify-content:center; padding:0.75rem; font-size:0.82rem; display:flex; flex-direction:column; gap:0.35rem; text-align:center; text-decoration:none; color:var(--text-primary); border-color:rgba(16,185,129,0.35);">
-                        <i class="fa-solid fa-tablet-screen-button" style="color:#10b981; font-size:1.15rem;"></i>
-                        <span>Open Wall Kiosk</span>
-                    </a>
-                    <button class="btn btn-secondary" onclick="remoteReloadKiosk();" style="justify-content:center; padding:0.75rem; font-size:0.82rem; display:flex; flex-direction:column; gap:0.35rem; text-align:center; border-color:rgba(59,130,246,0.35);">
-                        <i class="fa-solid fa-arrows-rotate" style="color:#3b82f6; font-size:1.15rem;"></i>
-                        <span>Reload Tablet Screen</span>
-                    </button>
-                </div>
             </div>
         `;
         modal.classList.add('active');
-    }
-
-    async function remoteReloadKiosk() {
-        try {
-            const res = await fetch('/api/kiosk/reload', { method: 'POST' });
-            const data = await res.json();
-            if (data.success) {
-                showToast('🔄 Signal sent! Wall tablet screen will reload momentarily.', 'success');
-            } else {
-                showToast('Failed to trigger tablet reload', 'error');
-            }
-        } catch (e) {
-            showToast('Error sending reload signal', 'error');
-        }
     }
 
     // Smart Polling: Pause when page is hidden/minimized to save mobile battery & CPU

@@ -316,20 +316,58 @@ def test_alerts_endpoint():
 def network_security_route():
     ports = []
     try:
-        res = subprocess.run(["ss", "-tulpn"], capture_output=True, text=True, timeout=2)
+        res = subprocess.run(["ss", "-tuln"], capture_output=True, text=True, timeout=2)
         lines = res.stdout.splitlines()[1:]
-        for line in lines[:12]:
+        seen_ports = set()
+        for line in lines:
             parts = line.split()
             if len(parts) >= 5:
-                ports.append({"proto": parts[0], "local": parts[4], "process": parts[-1] if len(parts) > 5 else "N/A"})
+                proto = parts[0].lower()
+                state = parts[1]
+                local = parts[4]
+                if (proto, local) not in seen_ports:
+                    seen_ports.add((proto, local))
+                    port_num = local.rsplit(':', 1)[-1]
+                    svc_name = "Listening Service" if state == "LISTEN" else "Active / Open"
+                    if port_num == "53": svc_name = "DNS Server"
+                    elif port_num == "5335": svc_name = "Unbound DNS"
+                    elif port_num in ["80", "8080"]: svc_name = "HTTP Web"
+                    elif port_num in ["443", "8443"]: svc_name = "HTTPS Web"
+                    elif port_num == "22": svc_name = "SSH Server"
+                    elif port_num == "5999": svc_name = "Command Center"
+                    elif port_num == "6999": svc_name = "Command Center"
+                    elif port_num == "5353": svc_name = "mDNS Discovery"
+                    elif port_num == "5355": svc_name = "LLMNR Discovery"
+                    elif port_num in ["3702", "7359"]: svc_name = "Media Discovery"
+
+                    ports.append({
+                        "proto": proto.upper(),
+                        "local": local,
+                        "state": state,
+                        "process": svc_name
+                    })
+            if len(ports) >= 15:
+                break
     except Exception:
         pass
 
-    net_data = {
-        "ufw_status": "Active (Default Deny Incoming)",
-        "open_ports": ports,
-        "interfaces": {}
-    }
+    ufw_status = "Disabled / Inactive"
+    try:
+        chk = subprocess.run(["ufw", "status"], capture_output=True, text=True, timeout=2)
+        if "Status: active" in chk.stdout:
+            ufw_status = "Active (Enforced)"
+        elif "Status: inactive" in chk.stdout:
+            ufw_status = "Inactive (Open)"
+        else:
+            res_ufw = subprocess.run(["systemctl", "is-active", "ufw"], capture_output=True, text=True, timeout=2)
+            if res_ufw.stdout.strip() == "active":
+                ufw_status = "Active"
+            else:
+                ufw_status = "Inactive"
+    except Exception:
+        ufw_status = "Not Installed / iptables"
+
+    interfaces = {}
     try:
         if_addrs = psutil.net_if_addrs()
         for iface, addrs in if_addrs.items():
@@ -338,15 +376,20 @@ def network_security_route():
             for a in addrs:
                 family_name = getattr(getattr(a, 'family', None), 'name', '')
                 if family_name == 'AF_INET' or getattr(a, 'family', None) == 2:
-                    net_data["interfaces"][iface] = a.address
-                    if not net_data.get("primary_ip"):
-                        net_data["primary_ip"] = a.address
+                    if not a.address.startswith('127.'):
+                        interfaces[iface] = a.address
     except Exception:
         pass
 
-    discovered_ips = list(net_data.get("interfaces", {}).values())
-    net_data["enp3s0_ip"] = net_data.get("interfaces", {}).get("enp3s0", (discovered_ips[0] if len(discovered_ips) > 0 else "127.0.0.1"))
-    net_data["eno1_ip"] = net_data.get("interfaces", {}).get("eno1", (discovered_ips[1] if len(discovered_ips) > 1 else net_data["enp3s0_ip"]))
+    if not interfaces:
+        interfaces["localhost"] = "127.0.0.1"
+
+    net_data = {
+        "ufw_status": ufw_status,
+        "open_ports": ports,
+        "interfaces": interfaces,
+        "primary_ip": list(interfaces.values())[0]
+    }
 
     return jsonify(net_data)
 

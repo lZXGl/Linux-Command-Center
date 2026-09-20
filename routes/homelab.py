@@ -466,5 +466,14 @@ def watchdog_heal_now_route():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@homelab_bp.route('/api/homelab/watchdog/clear-incidents', methods=['POST'])
+def watchdog_clear_incidents_route():
+    try:
+        from services.watchdog_manager import clear_watchdog_incidents
+        clear_watchdog_incidents()
+        return jsonify({"success": True, "message": "Watchdog incident history cleared successfully!"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 

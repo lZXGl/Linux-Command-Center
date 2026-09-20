@@ -14,12 +14,7 @@ _WATCHDOG_LOCK = threading.Lock()
 _WATCHDOG_THREAD = None
 _LAST_CHECK_TIME = None
 
-DEFAULT_MONITORED_SERVICES = [
-    {"id": "adguardhome", "type": "docker", "name": "AdGuard Home DNS", "container": "adguardhome", "critical": True},
-    {"id": "jellyfin", "type": "systemd", "name": "Jellyfin Media Server", "unit": "jellyfin.service", "critical": True},
-    {"id": "dockge", "type": "docker", "name": "Dockge Manager", "container": "dockge", "critical": True},
-    {"id": "immich", "type": "docker", "name": "Immich Photos Server", "container": "immich_server", "critical": False}
-]
+DEFAULT_MONITORED_SERVICES = []
 
 # In-memory tracking of restarts to prevent infinite loops (max 2 restarts per 15 mins)
 _RESTART_HISTORY = {}  # {service_id: [timestamps]}
@@ -33,10 +28,27 @@ def load_watchdog_config():
                 return json.load(f)
         except Exception:
             pass
+    
+    # Auto-derive monitored services from configured homelab containers
+    from config import get_all_homelab_services
+    auto_services = []
+    try:
+        for s in get_all_homelab_services():
+            if s.get("container"):
+                auto_services.append({
+                    "id": s.get("id", s["container"]),
+                    "type": "docker",
+                    "name": s.get("name", s["container"]),
+                    "container": s["container"],
+                    "critical": False
+                })
+    except Exception:
+        pass
+
     return {
         "enabled": True,
         "check_interval_seconds": 60,
-        "services": DEFAULT_MONITORED_SERVICES
+        "services": auto_services
     }
 
 def save_watchdog_config(cfg):
@@ -57,6 +69,14 @@ def load_watchdog_incidents(limit=25):
             pass
     return []
 
+def clear_watchdog_incidents():
+    try:
+        with open(WATCHDOG_INCIDENTS_FILE, "w") as f:
+            json.dump([], f)
+        return True
+    except Exception:
+        return False
+
 def record_watchdog_incident(service_id, service_name, action, result, details=""):
     incidents = []
     if os.path.exists(WATCHDOG_INCIDENTS_FILE):
@@ -69,9 +89,11 @@ def record_watchdog_incident(service_id, service_name, action, result, details="
     new_incident = {
         "id": service_id,
         "name": service_name,
+        "target": service_name,
         "action": action,
         "result": result,
         "details": details,
+        "reason": details or ("Crashed / Unreachable" if result != "Success" else "Recovered"),
         "timestamp": datetime.now().strftime("%Y-%m-%d %I:%M:%S %p"),
         "timestamp_epoch": time.time()
     }
