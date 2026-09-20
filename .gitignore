@@ -38,6 +38,7 @@ custom_homelab.json
 custom_systemd.json
 telemetry_history.json
 disk_telemetry_history.json
+dns_daily_history.json
 execution_history.json
 watchdog_incidents.json
 

@@ -29,7 +29,7 @@
     <script src="{{ url_for('static', filename='prismatic_burst.js') }}"></script>
     <script src="{{ url_for('static', filename='bg_switcher.js') }}"></script>
     
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v=20260919">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v=20260920b">
 </head>
 <body>
 
@@ -98,37 +98,19 @@
     <div class="category-tabs">
         <div class="category-tabs-inner">
             <button class="tab-btn active" onclick="switchCategory('all')"><i class="fa-solid fa-layer-group" style="color: var(--accent-cyan);"></i> All</button>
-        
-        <div class="tab-divider"></div>
-
-        <button class="tab-btn" onclick="switchCategory('Traffic Fines')"><i class="fa-solid fa-car" style="color: #f59e0b;"></i> Traffic Fines</button>
-        <button class="tab-btn" onclick="switchCategory('Daily Login')"><i class="fa-solid fa-user-check" style="color: #10b981;"></i> Daily Login</button>
-        <button class="tab-btn" onclick="switchCategory('Social & Media')"><i class="fa-solid fa-photo-film" style="color: #ec4899;"></i> Social & Media</button>
-        
-        <div class="tab-divider"></div>
-
-        <button class="tab-btn" onclick="switchCategory('Services & Dockge')"><i class="fa-solid fa-server" style="color: #3b82f6;"></i> Services & Dockge</button>
-        <button class="tab-btn" onclick="switchCategory('smart-storage-tab')"><i class="fa-solid fa-hard-drive" style="color: #06b6d4;"></i> SMART Drives</button>
-        
-        <div class="tab-divider"></div>
-
-        
-        
-        <div class="tab-divider"></div>
-
-        
-        <div class="tab-divider"></div>
-        <button class="tab-btn" onclick="switchCategory('pipelines-tab')"><i class="fa-solid fa-bolt" style="color: #eab308;"></i> Pipelines</button>
-        <div class="tab-divider"></div>
-        <button class="tab-btn" onclick="switchCategory('ai-tab')"><i class="fa-solid fa-brain" style="color: #ec4899;"></i> AI Ops</button>
-        
-
-        <div class="tab-divider"></div>
-
-        <button class="tab-btn" onclick="switchCategory('Execution History')"><i class="fa-solid fa-chart-line" style="color: #34d399;"></i> Execution History</button>
+            <div class="tab-divider"></div>
+            <button class="tab-btn" onclick="switchCategory('Maintenance')"><i class="fa-solid fa-wrench" style="color: #f59e0b;"></i> Maintenance</button>
+            <button class="tab-btn" onclick="switchCategory('Backups')"><i class="fa-solid fa-box-archive" style="color: #10b981;"></i> Backups</button>
+            <div class="tab-divider"></div>
+            <button class="tab-btn" onclick="switchCategory('Services & Dockge')"><i class="fa-solid fa-server" style="color: #3b82f6;"></i> Services & Dockge</button>
+            <button class="tab-btn" onclick="switchCategory('smart-storage-tab')"><i class="fa-solid fa-hard-drive" style="color: #06b6d4;"></i> SMART Drives</button>
+            <div class="tab-divider"></div>
+            <button class="tab-btn" onclick="switchCategory('pipelines-tab')"><i class="fa-solid fa-bolt" style="color: #eab308;"></i> Pipelines</button>
+            <div class="tab-divider"></div>
+            <button class="tab-btn" onclick="switchCategory('ai-tab')"><i class="fa-solid fa-brain" style="color: #ec4899;"></i> AI Ops</button>
+            <div class="tab-divider"></div>
+            <button class="tab-btn" onclick="switchCategory('Execution History')"><i class="fa-solid fa-chart-line" style="color: #34d399;"></i> Execution History</button>
         </div>
-
-
     </div>
 
     <!-- Script / Service Cards Grid (Pre-populated with Skeletons for Zero CLS) -->
@@ -731,7 +713,7 @@ Ask your Ops Copilot anything about your Linux server, crontabs, Docker configs,
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
                 <div>
                     <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0; display: flex; align-items: center; gap: 0.6rem;">
-                        <i class="fa-solid fa-chart-pie" style="color: #00f2fe;"></i> Fast Storage Space Distribution (/mnt/fast_storage)
+                        <i class="fa-solid fa-chart-pie" style="color: #00f2fe;"></i> Storage Space Distribution
                     </h3>
                     <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">Capacity breakdown across media libraries, backups, replays, and downloads</div>
                 </div>
@@ -815,26 +797,7 @@ Ask your Ops Copilot anything about your Linux server, crontabs, Docker configs,
             </div>
         </div>
     </div>
-
-    
-
-        <!-- Status Overview Card -->
-        <div id="promotion-summary-banner" style="margin-bottom: 1.5rem;">
-            Loading environment diff...
-        </div>
-
-        <!-- Diff Table -->
-        <div style="background: rgba(18, 18, 18, 0.75); backdrop-filter: blur(16px); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border-color);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="fa-solid fa-code-compare" style="color: #10b981;"></i> File & Route Comparison Matrix
-                </h3>
-            </div>
-            <div id="promotion-diff-table-container">
-                Loading files...
-            </div>
-        </div>
-    </div>
+</div>
 
 <!-- Modal for Viewing Log Terminal / Screenshots / System Update / Cron Editor / Video Player / Alerts Settings / Active Tasks -->
 <div class="modal" id="viewer-modal">
@@ -850,7 +813,7 @@ Ask your Ops Copilot anything about your Linux server, crontabs, Docker configs,
 </div>
 
 
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}?v=20260919"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}?v=20260920b"></script>
 
 
 <!-- Mobile Floating Action Button (FAB) -->

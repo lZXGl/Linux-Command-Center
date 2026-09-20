@@ -114,9 +114,8 @@
                     <div class="form-group">
                         <label>Category:</label>
                         <select id="new-script-category" class="form-control">
-                            <option value="Daily Login">Daily Login</option>
-                            <option value="Traffic Fines">Traffic Fines</option>
-                            <option value="Social & Media">Social & Media</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Backups">Backups</option>
                             <option value="Custom Scripts" selected>Custom Scripts</option>
                         </select>
                     </div>
@@ -447,7 +446,7 @@ if __name__ == "__main__":
     function triggerFullBackup() {
         showConfirm(
             'Create Full Application & System Backup',
-            'Take a complete timestamped .tar.gz archive copy of dashboard, private scripts, crontab rules, and configurations into /mnt/fast_storage/SERVER/linux backups/?',
+            'Take a complete timestamped .tar.gz archive copy of dashboard, configurations, and crontab rules into the configured backups directory?',
             async () => {
                 showToast('Creating full backup archive...', 'info', 3500);
                 try {
@@ -477,7 +476,7 @@ if __name__ == "__main__":
             if (!backups.length) {
                 document.getElementById('modal-body').innerHTML = `
                     <div style="text-align:center; padding:2rem;">
-                        <p style="color:var(--text-secondary); margin-bottom:1.5rem;">No backup archives found in <code>/mnt/fast_storage/SERVER/linux backups/</code>.</p>
+                        <p style="color:var(--text-secondary); margin-bottom:1.5rem;">No backup archives found in the backups directory.</p>
                         <button class="btn btn-primary" onclick="triggerFullBackup(); closeModal();"><i class="fa-solid fa-box-archive"></i> Create First Backup</button>
                     </div>
                 `;
@@ -836,7 +835,7 @@ if __name__ == "__main__":
         if (clearBtn) clearBtn.style.display = currentSearchQuery ? 'block' : 'none';
         
         // If user starts typing while on any special tab, auto-switch to All Scripts
-        if (currentSearchQuery && currentCategory !== 'all' && currentCategory !== 'Traffic Fines' && currentCategory !== 'Daily Login' && currentCategory !== 'Social & Media' && currentCategory !== 'Services & Dockge') {
+        if (currentSearchQuery && currentCategory !== 'all' && currentCategory !== 'Maintenance' && currentCategory !== 'Backups' && currentCategory !== 'Services & Dockge') {
             switchCategory('all');
         }
 
@@ -898,7 +897,7 @@ if __name__ == "__main__":
                                 <i class="fa-solid fa-box-archive" style="color: var(--accent-cyan); font-size: 1.2rem;"></i>
                                 <h4 style="font-size: 1rem; font-weight: 700; color: #fff;">Archive Backup</h4>
                             </div>
-                            <p style="font-size: 0.82rem; color: var(--text-secondary);">Backup configs & scripts to /mnt/fast_storage/server/linux backups/.</p>
+                            <p style="font-size: 0.82rem; color: var(--text-secondary);">Backup configs & scripts to the backups directory.</p>
                         </div>
                         <button class="btn btn-secondary" onclick="triggerBackup(); closeModal();" style="width: 100%; justify-content: center;">
                             <i class="fa-solid fa-box-archive"></i> Create Backup
@@ -1292,7 +1291,7 @@ if __name__ == "__main__":
                 <div class="stat-pill" title="AMD Radeon GPU Compute Load & Temperature"><i class="fa-solid fa-gamepad" style="color:#ec4899"></i> GPU: <strong>${data.gpu_percent || '0%'}</strong> <span style="color:#f472b6; font-size:0.75rem;">(${data.gpu_temp || 'N/A'})</span></div>
                 <div class="stat-pill" title="AMD Radeon VRAM Memory Allocation"><i class="fa-solid fa-layer-group" style="color:#c084fc"></i> VRAM: <strong>${data.vram_text || data.vram_percent || '0%'}</strong></div>
                 <div class="stat-pill" title="OS Disk 1 Storage Free"><i class="fa-solid fa-hard-drive"></i> OS Disk: <strong>${data.disk1_percent || '0%'}</strong></div>
-                <div class="stat-pill" title="Fast Storage Disk 2 Free (/mnt/fast_storage)"><i class="fa-solid fa-server" style="color:var(--accent-cyan)"></i> Fast Storage: <strong>${data.disk2_percent || '0%'}</strong></div>
+                <div class="stat-pill" title="Secondary Storage Volume Free"><i class="fa-solid fa-server" style="color:var(--accent-cyan)"></i> Fast Storage: <strong>${data.disk2_percent || '0%'}</strong></div>
                 <div class="stat-pill clickable-pill" title="Pi-hole + AdGuard Combined Queries (Click to open DNS console)" onclick="openDnsChooserModal('total')"><i class="fa-solid fa-globe" style="color:#818cf8"></i> Total DNS: <strong>${dns.combined_total || '0'}</strong></div>
                 <div class="stat-pill clickable-pill stat-pill-blocked" title="Pi-hole + AdGuard Blocked Threats (Click to open Blocked DNS console)" onclick="openDnsChooserModal('blocked')"><i class="fa-solid fa-shield-virus" style="color:var(--accent-green)"></i> Blocked: <strong>${dns.combined_blocked || '0'} (${dns.block_percent || '0%'})</strong></div>
             `;
@@ -1444,15 +1443,13 @@ if __name__ == "__main__":
     function switchCategory(cat) {
         currentCategory = cat;
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            const isMatch = (cat === 'torlink-tab' && (btn.innerText.includes('Media Grabber') || btn.getAttribute('onclick')?.includes('torlink-tab'))) ||
-                            (cat === 'system-tab' && (btn.innerText.includes('System') || btn.getAttribute('onclick')?.includes('system-tab'))) ||
+            const isMatch = (cat === 'system-tab' && (btn.innerText.includes('System') || btn.getAttribute('onclick')?.includes('system-tab'))) ||
                             (cat === 'pipelines-tab' && (btn.innerText.includes('Pipelines') || btn.getAttribute('onclick')?.includes('pipelines-tab'))) ||
                             (cat === 'ai-tab' && (btn.innerText.includes('AI Ops') || btn.getAttribute('onclick')?.includes('ai-tab'))) ||
                             (cat === 'smart-storage-tab' && (btn.innerText.includes('SMART') || btn.getAttribute('onclick')?.includes('smart-storage-tab'))) ||
-                            (cat === 'promotion-tab' && (btn.innerText.includes('Prod') || btn.getAttribute('onclick')?.includes('promotion-tab'))) ||
                             (cat === 'all' && btn.innerText.includes('All')) ||
                             ((cat === 'Services & Dockge' || cat === 'Homelab Services') && (btn.innerText.includes('Services') || btn.innerText.includes('Dockge') || btn.innerText.includes('Homelab'))) ||
-                            (!['torlink-tab','smart-storage-tab','system-tab','pipelines-tab','ai-tab','promotion-tab'].includes(cat) && btn.innerText.includes(cat));
+                            (!['smart-storage-tab','system-tab','pipelines-tab','ai-tab'].includes(cat) && btn.innerText.includes(cat));
             btn.classList.toggle('active', isMatch);
         });
         renderContent(true);
@@ -1460,28 +1457,17 @@ if __name__ == "__main__":
 
     function renderContent(triggerAnimation = false) {
         const grid = document.getElementById('scripts-grid');
-        const studioView = document.getElementById('video-studio-view');
         const historyView = document.getElementById('history-view');
         const systemView = document.getElementById('system-tab-view');
         const storageView = document.getElementById('storage-tab-view');
         const pipelinesView = document.getElementById('pipelines-tab-view');
         const aiView = document.getElementById('ai-tab-view');
         const smartStorageView = document.getElementById('smart-storage-tab-view');
-        const torlinkView = document.getElementById('torlink-tab-view');
-        const promotionView = document.getElementById('promotion-tab-view');
 
         // Hide all special views initially
-        [studioView, historyView, systemView, storageView, pipelinesView, aiView, smartStorageView, torlinkView, promotionView].forEach(v => {
+        [historyView, systemView, storageView, pipelinesView, aiView, smartStorageView].forEach(v => {
             if (v) v.classList.remove('active-tab');
         });
-
-        if (currentCategory === 'torlink-tab') {
-            grid.style.display = 'none';
-            if (torlinkView) torlinkView.classList.add('active-tab');
-            loadTorlinkStatus();
-            loadTorlinkDownloads();
-            return;
-        }
 
         if (currentCategory === 'smart-storage-tab') {
             grid.style.display = 'none';
@@ -1505,13 +1491,6 @@ if __name__ == "__main__":
             return;
         }
 
-        if (currentCategory === 'promotion-tab') {
-            grid.style.display = 'none';
-            if (promotionView) promotionView.classList.add('active-tab');
-            loadPromotionDiff();
-            return;
-        }
-
         if (currentCategory === 'storage-tab') {
             grid.style.display = 'none';
             if (storageView) storageView.classList.add('active-tab');
@@ -1528,17 +1507,6 @@ if __name__ == "__main__":
             loadDnsHistoryChart();
             loadNetworkSecurity();
             loadWatchdogStatus();
-            return;
-        }
-
-        if (currentCategory === 'Video Automation Studio') {
-            grid.style.display = 'none';
-            if (triggerAnimation && studioView) {
-                studioView.style.animation = 'none';
-                studioView.offsetHeight;
-                studioView.style.animation = 'fadeInUp 0.35s ease-out';
-            }
-            if (studioView) studioView.classList.add('active-tab');
             return;
         }
 
@@ -2033,7 +2001,7 @@ if __name__ == "__main__":
     function triggerBackup() {
         showConfirm(
             "Create Homelab Config Backup",
-            "Create a clean .tar.gz archive backup of Docker homelab, scripts, and dashboard in /mnt/fast_storage/server/linux backups/?",
+            "Create a clean .tar.gz archive backup of Docker homelab, scripts, and dashboard in the backups directory?",
             async () => {
                 try {
                     showToast('Creating config backup archive...', 'info', 3000);
@@ -2883,7 +2851,7 @@ if __name__ == "__main__":
 
         if (breadcrumbs) {
             breadcrumbs.innerHTML = `
-                <span style="color:var(--text-secondary);">Path:</span> /mnt/fast_storage/SERVER/${path}
+                <span style="color:var(--text-secondary);">Storage Root:</span> /${path}
                 ${path ? `<button class="btn btn-secondary" style="padding:0.2rem 0.6rem; font-size:0.75rem; margin-left:1rem;" onclick="loadStorageExplorer('')"><i class="fa-solid fa-house"></i> Root</button>` : ''}
             `;
         }
@@ -3093,12 +3061,12 @@ if __name__ == "__main__":
                                 <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; gap: 1rem;">
                                     <div>
                                         <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem;">
-                                            <i class="fa-solid fa-film" style="color: #00f2fe;"></i>
-                                            <strong style="color: #fff; font-size: 0.95rem;">Video Render ➔ TikTok Upload</strong>
+                                            <i class="fa-solid fa-heart-pulse" style="color: #00f2fe;"></i>
+                                            <strong style="color: #fff; font-size: 0.95rem;">Health Check ➔ Status Alert</strong>
                                         </div>
-                                        <p style="font-size: 0.8rem; color: var(--text-secondary);">When video processor completes, automatically start TikTok uploader and send alert.</p>
+                                        <p style="font-size: 0.8rem; color: var(--text-secondary);">When server health check completes, automatically dispatch a status notification alert.</p>
                                     </div>
-                                    <button class="btn btn-secondary" onclick="deployPipelineTemplate('video_tiktok')" style="width: 100%; justify-content: center; font-size: 0.8rem;">
+                                    <button class="btn btn-secondary" onclick="deployPipelineTemplate('health_alert')" style="width: 100%; justify-content: center; font-size: 0.8rem;">
                                         <i class="fa-solid fa-bolt" style="color: #eab308;"></i> Deploy Template
                                     </button>
                                 </div>
@@ -3106,12 +3074,12 @@ if __name__ == "__main__":
                                 <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; gap: 1rem;">
                                     <div>
                                         <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem;">
-                                            <i class="fa-solid fa-car" style="color: #f59e0b;"></i>
-                                            <strong style="color: #fff; font-size: 0.95rem;">Traffic Check ➔ Phone Alert</strong>
+                                            <i class="fa-solid fa-box-archive" style="color: #f59e0b;"></i>
+                                            <strong style="color: #fff; font-size: 0.95rem;">Backup Snapshot ➔ Notification</strong>
                                         </div>
-                                        <p style="font-size: 0.8rem; color: var(--text-secondary);">When backup or maintenance tasks check finishes, send instant Discord/Telegram alert.</p>
+                                        <p style="font-size: 0.8rem; color: var(--text-secondary);">When daily backup finishes, send instant Discord, Telegram, or Webhook notification.</p>
                                     </div>
-                                    <button class="btn btn-secondary" onclick="deployPipelineTemplate('fines_alert')" style="width: 100%; justify-content: center; font-size: 0.8rem;">
+                                    <button class="btn btn-secondary" onclick="deployPipelineTemplate('snapshot_notify')" style="width: 100%; justify-content: center; font-size: 0.8rem;">
                                         <i class="fa-solid fa-bolt" style="color: #eab308;"></i> Deploy Template
                                     </button>
                                 </div>
@@ -3281,25 +3249,24 @@ if __name__ == "__main__":
 
     async function deployPipelineTemplate(templateKey) {
         let payload = null;
-        if (templateKey === 'video_tiktok') {
+        if (templateKey === 'health_alert') {
             payload = {
-                name: "Video Render ➔ TikTok Upload Chain",
-                desc: "When video rendering finishes, automatically start TikTok uploader and send alert.",
+                name: "Health Check ➔ Discord/Telegram Alert",
+                desc: "When system health check finishes, dispatch status notification alert.",
                 enabled: true,
-                trigger: { type: "script_success", source: "video_processor.py" },
+                trigger: { type: "script_success", source: "health_check.py" },
                 actions: [
-                    { type: "send_alert", title: "Video Render Completed", message: "Video rendering finished. Initiating automated TikTok upload chain." },
-                    { type: "run_script", target: "tiktok_uploader" }
+                    { type: "send_alert", title: "Server Health Verified", message: "System health check completed successfully." }
                 ]
             };
-        } else if (templateKey === 'fines_alert') {
+        } else if (templateKey === 'snapshot_notify') {
             payload = {
-                name: "Traffic Fine Check ➔ Notification Alert",
-                desc: "When traffic fines check script runs, dispatch an alert with results.",
+                name: "Daily Backup ➔ Snapshot Notification",
+                desc: "When daily snapshot backup completes, dispatch notification alert.",
                 enabled: true,
                 trigger: { type: "script_success", source: "backup_task.py" },
                 actions: [
-                    { type: "send_alert", title: "Traffic Fines Checked", message: "Traffic fines automation finished execution successfully." }
+                    { type: "send_alert", title: "Daily Backup Finished", message: "Daily homelab snapshot backup completed successfully." }
                 ]
             };
         } else if (templateKey === 'docker_backup') {
@@ -3310,7 +3277,7 @@ if __name__ == "__main__":
                 trigger: { type: "script_success", source: "docker_cleanup.py" },
                 actions: [
                     { type: "send_alert", title: "Docker Cleanup Done", message: "Docker cleanup complete. Starting daily backup..." },
-                    { type: "run_script", target: "backup_task" }
+                    { type: "run_script", target: "backup_daily" }
                 ]
             };
         }
@@ -3346,15 +3313,8 @@ if __name__ == "__main__":
         } else {
             // Fallback presets
             options = `
-                <option value="video_processor.py">Video Automation Studio (video_processor.py)</option>
-                <option value="tiktok_uploader">TikTok Daily Uploader (tiktok_uploader.py)</option>
-                <option value="friday_status">Friday Status Uploader (friday_status.py)</option>
-                <option value="backup_task">Daily Backup Task (backup_task.py)</option>
-                <option value="docker_cleanup">Docker System Cleanup (docker_cleanup.py)</option>
-                <option value="ali1">Ali's Car 1 (Ali1.py)</option>
-                <option value="ali2">Ali's Car 2 (Ali2.py)</option>
                 <option value="health_check">System Health Check (health_check.py)</option>
-                <option value="docker_prune">Docker System Cleanup (docker_cleanup.py)</option>
+                <option value="docker_cleanup">Docker System Cleanup (docker_cleanup.py)</option>
                 <option value="backup_daily">Daily Homelab Backup (backup_task.py)</option>
             `;
         }
@@ -3891,620 +3851,6 @@ ${data.analysis || 'Analysis could not be generated.'}
     }
 
     // ==========================================
-    // --- TORLINK MEDIA GRABBER CONTROLLER ---
-    // ==========================================
-    let currentSelectedTorlinkInterface = localStorage.getItem('torlink_selected_interface') || null;
-
-    function updatePortToggleUI(activeIface) {
-        const btn1 = document.getElementById('btn-port1-eno1');
-        const btn2 = document.getElementById('btn-port2-enp3s0');
-        const isOrange = (activeIface === 'eno1');
-
-        if (btn1 && btn2) {
-            if (isOrange) {
-                btn1.style.background = 'rgba(249, 115, 22, 0.22)';
-                btn1.style.borderColor = '#f97316';
-                btn1.style.color = '#fff';
-                btn1.style.boxShadow = '0 0 14px rgba(249, 115, 22, 0.45)';
-
-                btn2.style.background = 'rgba(255, 255, 255, 0.05)';
-                btn2.style.borderColor = 'var(--border-color)';
-                btn2.style.color = 'var(--text-secondary)';
-                btn2.style.boxShadow = 'none';
-            } else {
-                btn2.style.background = 'rgba(168, 85, 247, 0.22)';
-                btn2.style.borderColor = '#a855f7';
-                btn2.style.color = '#fff';
-                btn2.style.boxShadow = '0 0 14px rgba(168, 85, 247, 0.45)';
-
-                btn1.style.background = 'rgba(255, 255, 255, 0.05)';
-                btn1.style.borderColor = 'var(--border-color)';
-                btn1.style.color = 'var(--text-secondary)';
-                btn1.style.boxShadow = 'none';
-            }
-        }
-
-        // Dynamically update Direct Magnet submit button
-        const directBtn = document.getElementById('btn-torlink-direct-queue');
-        if (directBtn) {
-            if (isOrange) {
-                directBtn.style.background = 'linear-gradient(135deg, #f97316, #ea580c)';
-                directBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> Queue Download via Orange (.14)';
-            } else {
-                directBtn.style.background = 'linear-gradient(135deg, #9333ea, #7e22ce)';
-                directBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> Queue Download via WE (.12)';
-            }
-        }
-
-        // Dynamically update Search Result download buttons
-        document.querySelectorAll('.torlink-download-btn').forEach(btn => {
-            if (isOrange) {
-                btn.style.background = 'linear-gradient(135deg, #f97316, #ea580c)';
-                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> Download via Orange';
-            } else {
-                btn.style.background = 'linear-gradient(135deg, #9333ea, #7e22ce)';
-                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> Download via WE';
-            }
-        });
-    }
-
-    async function switchTorlinkInterfaceAction(iface) {
-        currentSelectedTorlinkInterface = iface;
-        try { localStorage.setItem('torlink_selected_interface', iface); } catch(e) {}
-        updatePortToggleUI(iface);
-        const name = iface === 'eno1' ? 'Orange (10.0.0.2)' : 'WE (10.0.0.1)';
-        showToast(`Switching downloads to ${name}...`, 'info', 2000);
-
-        try {
-            const res = await fetch('/api/torlink/interface', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ interface: iface })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showToast(`Active Router: ${iface === 'eno1' ? 'Orange' : 'WE'} (${iface === 'eno1' ? '10.0.0.2' : '10.0.0.1'})`, 'success', 2500);
-                loadTorlinkStatus();
-                loadTorlinkDownloads();
-            } else {
-                showToast(data.error || 'Failed to switch router', 'error');
-            }
-        } catch(e) {
-            showToast('Error setting active router', 'error');
-        }
-    }
-
-    async function loadTorlinkStatus() {
-        const badge = document.getElementById('torlink-status-badge');
-        if (!badge) return;
-        try {
-            const res = await fetch('/api/torlink/status');
-            const data = await res.json();
-            if (data.running) {
-                badge.innerHTML = `<i class="fa-solid fa-circle" style="color:var(--accent-green); font-size:0.65rem;"></i> Active (:9161)`;
-                badge.style.background = 'rgba(16, 185, 129, 0.15)';
-                badge.style.color = 'var(--accent-green)';
-                badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-            } else {
-                badge.innerHTML = `<i class="fa-solid fa-circle" style="color:var(--accent-amber); font-size:0.65rem;"></i> Standby`;
-                badge.style.background = 'rgba(245, 158, 11, 0.15)';
-                badge.style.color = '#f59e0b';
-                badge.style.borderColor = 'rgba(245, 158, 11, 0.3)';
-            }
-
-            const storedIface = localStorage.getItem('torlink_selected_interface');
-            const activeIface = currentSelectedTorlinkInterface || storedIface || data.current_interface || 'eno1';
-            currentSelectedTorlinkInterface = activeIface;
-            updatePortToggleUI(activeIface);
-        } catch(e) {
-            badge.innerText = 'Standby';
-        }
-    }
-
-    async function triggerJellyfinSyncAction() {
-        showToast('Notifying Jellyfin media scanner...', 'info', 2500);
-        try {
-            const res = await fetch('/api/torlink/refresh-jellyfin', { method: 'POST' });
-            const data = await res.json();
-            showToast(data.message || 'Jellyfin scan triggered!', 'success');
-        } catch(e) { showToast('Failed to sync Jellyfin', 'error'); }
-    }
-
-    function setTorlinkSearch(term) {
-        const input = document.getElementById('torlink-search-input');
-        if (input) {
-            input.value = term;
-            searchTorrentsAction(term);
-        }
-    }
-
-    let currentTorlinkAbortCtrl = null;
-    let cachedTorlinkResults = [];
-    let currentTorlinkCategoryFilter = 'all';
-
-    function filterTorlinkCategory(cat) {
-        currentTorlinkCategoryFilter = cat;
-        document.querySelectorAll('.torlink-type-btn').forEach(btn => {
-            const isMatch = (cat === 'all' && btn.innerText.includes('All')) ||
-                            (cat === 'movie' && btn.innerText.includes('Movies')) ||
-                            (cat === 'tv' && btn.innerText.trim().endsWith('TV')) ||
-                            (cat === 'anime' && btn.innerText.includes('Anime')) ||
-                            (cat === 'game' && btn.innerText.includes('Games'));
-            btn.style.background = isMatch ? 'rgba(244,63,94,0.25)' : '';
-            btn.style.borderColor = isMatch ? '#f43f5e' : '';
-            btn.style.color = isMatch ? '#fff' : '';
-        });
-        renderTorlinkResultsList();
-    }
-
-    function getCategoryBadge(cat) {
-        switch(cat) {
-            case 'movie': return `<span class="count-pill" style="font-size:0.7rem; padding:0.15rem 0.5rem; background:rgba(0,242,254,0.15); color:#00f2fe; border-color:rgba(0,242,254,0.3);"><i class="fa-solid fa-film"></i> MOVIE</span>`;
-            case 'tv': return `<span class="count-pill" style="font-size:0.7rem; padding:0.15rem 0.5rem; background:rgba(167,139,250,0.15); color:#a78bfa; border-color:rgba(167,139,250,0.3);"><i class="fa-solid fa-tv"></i> TV</span>`;
-            case 'anime': return `<span class="count-pill" style="font-size:0.7rem; padding:0.15rem 0.5rem; background:rgba(236,72,153,0.15); color:#ec4899; border-color:rgba(236,72,153,0.3);"><i class="fa-solid fa-dragon"></i> ANIME</span>`;
-            case 'game': return `<span class="count-pill" style="font-size:0.7rem; padding:0.15rem 0.5rem; background:rgba(52,211,153,0.15); color:#34d399; border-color:rgba(52,211,153,0.3);"><i class="fa-solid fa-gamepad"></i> GAMES</span>`;
-            default: return `<span class="count-pill" style="font-size:0.7rem; padding:0.15rem 0.5rem; background:rgba(255,255,255,0.08); color:var(--text-secondary);"><i class="fa-solid fa-file"></i> MEDIA</span>`;
-        }
-    }
-
-    function renderTorlinkResultsList() {
-        const resultsContainer = document.getElementById('torlink-search-results');
-        const countSpan = document.getElementById('torlink-search-count');
-        if (!resultsContainer) return;
-
-        let filtered = cachedTorlinkResults;
-        if (currentTorlinkCategoryFilter !== 'all') {
-            filtered = cachedTorlinkResults.filter(r => r.category === currentTorlinkCategoryFilter);
-        }
-
-        if (countSpan) countSpan.innerText = `${filtered.length} results`;
-
-        if (!filtered.length) {
-            resultsContainer.innerHTML = `
-                <div style="text-align: center; color: var(--text-secondary); padding: 2.5rem;">
-                    <i class="fa-solid fa-filter" style="font-size: 1.8rem; color: rgba(255,255,255,0.2); margin-bottom: 0.75rem; display: block;"></i>
-                    No results found for category "<strong>${currentTorlinkCategoryFilter}</strong>". Try selecting "All" or searching a different title.
-                </div>
-            `;
-            return;
-        }
-
-        resultsContainer.innerHTML = filtered.map((r) => {
-            const magnetEscaped = encodeURIComponent(r.magnet || '');
-            const titleEscaped = encodeURIComponent(r.title || 'Torrent');
-            const categoryBadge = getCategoryBadge(r.category || 'other');
-            const isOrange = (currentSelectedTorlinkInterface || 'eno1') === 'eno1';
-            const btnBg = isOrange ? '#ff9f0a' : '#bf5af2';
-            const btnShadow = isOrange ? '0 2px 8px rgba(255, 159, 10, 0.35)' : '0 2px 8px rgba(191, 90, 242, 0.35)';
-            const btnLabel = isOrange ? 'Download (Orange)' : 'Download (WE)';
-            return `
-                <div class="torlink-search-item" style="background: rgba(44, 44, 46, 0.55); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 0.85rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; transition: transform 0.2s ease, border-color 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-                    <div class="torlink-search-item-info" style="flex: 1 1 200px; min-width: 0;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
-                            ${categoryBadge}
-                            <span class="count-pill" style="font-size: 0.7rem; padding: 0.15rem 0.55rem; text-transform: uppercase; background: rgba(255, 55, 95, 0.15); color: #ff375f; border: 1px solid rgba(255, 55, 95, 0.3); border-radius: 9999px; flex-shrink: 0; font-weight: 500;">
-                                ${escapeHtml(r.source || 'P2P')}
-                            </span>
-                            <strong class="torlink-search-title" style="color: #fff; font-size: 0.9rem; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; max-width: 100%;" title="${escapeHtml(r.title || '')}">
-                                ${escapeHtml(r.title || 'Unknown Title')}
-                            </strong>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.78rem; color: #86868b; flex-wrap: wrap;">
-                            <span><i class="fa-solid fa-hard-drive" style="color: #64d2ff;"></i> ${r.size || 'N/A'}</span>
-                            <span style="color: #30d158;"><i class="fa-solid fa-arrow-up"></i> ${r.seeds || 0} seeds</span>
-                            <span style="color: #ff9f0a;"><i class="fa-solid fa-arrow-down"></i> ${r.leechers || 0} peers</span>
-                        </div>
-                    </div>
-                    <div class="torlink-search-item-actions" style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
-                        <button class="btn btn-primary torlink-download-btn" onclick="downloadTorrentAction('${magnetEscaped}', '${titleEscaped}')" style="padding: 0.45rem 0.95rem; font-size: 0.8rem; background: ${btnBg}; box-shadow: ${btnShadow}; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 9999px; white-space: nowrap; font-weight: 500; color: #fff;">
-                            <i class="fa-solid fa-cloud-arrow-down"></i> ${btnLabel}
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function clearTorlinkResults() {
-        const input = document.getElementById('torlink-search-input');
-        const countSpan = document.getElementById('torlink-search-count');
-        const resultsContainer = document.getElementById('torlink-search-results');
-        
-        if (currentTorlinkAbortCtrl) {
-            try { currentTorlinkAbortCtrl.abort(); } catch(e) {}
-        }
-
-        if (input) input.value = '';
-        if (countSpan) countSpan.innerText = '0 results';
-        cachedTorlinkResults = [];
-        currentTorlinkCategoryFilter = 'all';
-
-        document.querySelectorAll('.torlink-type-btn').forEach(btn => {
-            const isAll = btn.innerText.includes('All');
-            btn.style.background = isAll ? 'rgba(244,63,94,0.25)' : '';
-            btn.style.borderColor = isAll ? '#f43f5e' : '';
-            btn.style.color = isAll ? '#fff' : '';
-        });
-
-        if (resultsContainer) {
-            resultsContainer.innerHTML = `
-                <div style="text-align: center; color: var(--text-secondary); padding: 2.5rem;">
-                    <i class="fa-solid fa-magnet" style="font-size: 2rem; color: rgba(244,63,94,0.3); margin-bottom: 0.75rem; display: block;"></i>
-                    Search above or click a category filter to grab movies, anime, TV shows, and games.
-                </div>
-            `;
-        }
-        showToast('Search results cleared', 'info', 1800);
-    }
-
-    async function searchTorrentsAction(queryOverride) {
-        const input = document.getElementById('torlink-search-input');
-        const resultsContainer = document.getElementById('torlink-search-results');
-        const btn = document.getElementById('btn-torlink-search');
-        
-        let q = queryOverride;
-        if (!q && input) {
-            q = input.value.trim();
-        }
-        if (!q) {
-            showToast('Please type a movie, show, game or media title to search', 'warning');
-            return;
-        }
-
-        if (input && queryOverride) {
-            input.value = queryOverride;
-        }
-
-        // Cancel previous in-flight request if user triggered a new search
-        if (currentTorlinkAbortCtrl) {
-            try { currentTorlinkAbortCtrl.abort(); } catch(e) {}
-        }
-        currentTorlinkAbortCtrl = new AbortController();
-        const signal = currentTorlinkAbortCtrl.signal;
-
-        if (btn) {
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Searching...`;
-        }
-        if (resultsContainer) {
-            resultsContainer.innerHTML = `
-                <div style="text-align: center; color: var(--text-secondary); padding: 2.5rem;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; border: 3px solid rgba(244,63,94,0.2); border-top-color: #f43f5e; animation: spin 1s linear infinite; margin: 0 auto 1rem auto;"></div>
-                    <div style="font-size:0.95rem; font-weight:600; color:#fff;">Searching YTS, 1337x, Nyaa, EZTV, PirateBay...</div>
-                    <div style="font-size:0.8rem; margin-top:0.3rem;">Query: "${escapeHtml(q)}"</div>
-                </div>
-            `;
-        }
-
-        try {
-            const res = await fetch(`/api/torlink/search?q=${encodeURIComponent(q)}`, { signal });
-            const results = await res.json();
-            cachedTorlinkResults = Array.isArray(results) ? results : [];
-            renderTorlinkResultsList();
-        } catch(e) {
-            if (e.name === 'AbortError') return;
-            console.error("Torlink search error:", e);
-            if (resultsContainer) {
-                resultsContainer.innerHTML = `<div style="color:var(--accent-red); padding:1.5rem; text-align:center;">Failed to fetch torrent search results. Please try again.</div>`;
-            }
-        } finally {
-            if (btn) {
-                btn.innerHTML = `<i class="fa-solid fa-search"></i> Search`;
-            }
-        }
-    }
-
-    async function downloadTorrentAction(magnetEncoded, titleEncoded) {
-        const magnet = decodeURIComponent(magnetEncoded);
-        const title = decodeURIComponent(titleEncoded);
-        const interfaceParam = currentSelectedTorlinkInterface || 'eno1';
-        const isOrange = (interfaceParam === 'eno1');
-
-        const ifaceLabel = isOrange ? 'Orange Router (Port 1 - 10.0.0.2)' : 'WE Router (Port 2 - 10.0.0.1)';
-        const quotaWarning = isOrange
-            ? '• Network: Orange (10.0.0.2)\n• Package: Unlimited / Main Fiber (Safe)'
-            : '⚠️ ATTENTION: WE LIMITED PACKAGE!\n• Network: WE (10.0.0.1)\n• WARNING: This download will consume your limited WE data package!';
-
-        const confirmMsg = `CONFIRM TORRENT DOWNLOAD\n========================================\nMedia: ${title}\nInterface: ${ifaceLabel}\n\n${quotaWarning}\n\nDo you want to proceed with downloading over ${isOrange ? 'Orange' : 'WE'}?`;
-
-        if (!confirm(confirmMsg)) {
-            showToast('Download cancelled', 'info', 2000);
-            return;
-        }
-
-        showToast(`Queuing "${title.slice(0, 25)}..." via ${ifaceLabel}`, 'info', 3500);
-
-        try {
-            const res = await fetch('/api/torlink/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ magnet, title, interface: interfaceParam })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showToast(data.message || 'Download queued successfully!', 'success');
-                setTimeout(() => {
-                    loadTorlinkStatus();
-                    loadTorlinkDownloads();
-                }, 1500);
-            } else {
-                showToast(data.error || 'Failed to queue torrent', 'error');
-            }
-        } catch(e) {
-            showToast('Error sending magnet to Torlink', 'error');
-        }
-    }
-
-    async function addCustomMagnetAction() {
-        const textarea = document.getElementById('torlink-direct-magnet');
-        const text = textarea ? textarea.value.trim() : '';
-        if (!text) {
-            showToast('Please paste a valid magnet link or infohash', 'error');
-            return;
-        }
-
-        const interfaceParam = currentSelectedTorlinkInterface || 'eno1';
-        const isOrange = (interfaceParam === 'eno1');
-
-        const ifaceLabel = isOrange ? 'Orange Router (Port 1 - 10.0.0.2)' : 'WE Router (Port 2 - 10.0.0.1)';
-        const quotaWarning = isOrange
-            ? '• Network: Orange (10.0.0.2)\n• Package: Unlimited / Main Fiber (Safe)'
-            : '⚠️ ATTENTION: WE LIMITED PACKAGE!\n• Network: WE (10.0.0.1)\n• WARNING: This download will consume your limited WE data package!';
-
-        const confirmMsg = `CONFIRM DIRECT MAGNET DOWNLOAD\n========================================\nInterface: ${ifaceLabel}\n\n${quotaWarning}\n\nDo you want to proceed with downloading over ${isOrange ? 'Orange' : 'WE'}?`;
-
-        if (!confirm(confirmMsg)) {
-            showToast('Download cancelled', 'info', 2000);
-            return;
-        }
-
-        textarea.value = '';
-        showToast(`Queuing custom magnet via ${ifaceLabel}...`, 'info', 3000);
-
-        try {
-            const res = await fetch('/api/torlink/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ magnet: text, title: 'Direct Magnet', interface: interfaceParam })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showToast(data.message || 'Torrent queued!', 'success');
-                setTimeout(() => {
-                    loadTorlinkStatus();
-                    loadTorlinkDownloads();
-                }, 1500);
-            } else {
-                showToast(data.error || 'Failed to queue magnet', 'error');
-            }
-        } catch(e) {
-            showToast('Error queueing custom magnet', 'error');
-        }
-    }
-
-    async function setTorrentMediaFlagAction(id, type) {
-        if (!id) return;
-        try {
-            const res = await fetch('/api/torlink/flag', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id, type: type })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showToast(`Target set to ${type.toUpperCase()} - will move to ${type === 'series' ? 'Series' : 'Movies'} on completion`, 'success', 2200);
-                loadTorlinkDownloads();
-            } else {
-                showToast(data.error || 'Failed to update media flag', 'error');
-            }
-        } catch(e) {
-            showToast('Error updating media flag', 'error');
-        }
-    }
-
-    async function controlTorlinkDownloadAction(id, action) {
-        if (!id) return;
-        const verb = action === 'pause' ? 'Pausing' : 'Resuming';
-        showToast(`${verb} download...`, 'info', 1800);
-
-        try {
-            const res = await fetch('/api/torlink/control', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id, action: action })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showToast(data.message || `Download ${action}d!`, 'success');
-                setTimeout(() => {
-                    loadTorlinkDownloads();
-                }, 500);
-            } else {
-                showToast(data.error || `Failed to ${action} download`, 'error');
-            }
-        } catch(e) {
-            showToast(`Error trying to ${action} download`, 'error');
-        }
-    }
-
-    async function cancelTorlinkDownloadAction(id, name) {
-        if (!id) {
-            showToast('Cannot cancel: missing torrent ID', 'error');
-            return;
-        }
-        if (!confirm(`Cancel and delete download: "${name || 'this torrent'}"?`)) return;
-
-        showToast('Cancelling download...', 'info', 2000);
-        try {
-            const res = await fetch('/api/torlink/cancel', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showToast(data.message || 'Download cancelled successfully', 'success');
-                setTimeout(() => {
-                    loadTorlinkDownloads();
-                }, 600);
-            } else {
-                showToast(data.error || 'Failed to cancel download', 'error');
-            }
-        } catch(e) {
-            showToast('Error cancelling download', 'error');
-        }
-    }
-
-    async function loadTorlinkDownloads() {
-        const container = document.getElementById('torlink-downloads-list');
-        const countPill = document.getElementById('torlink-active-count-pill');
-        if (!container) return;
-
-        try {
-            const res = await fetch('/api/torlink/downloads');
-            const data = await res.json();
-
-            const downloads = data.downloads || [];
-            const seeds = data.seeds || [];
-            const allItems = [...downloads, ...seeds];
-
-            if (countPill) countPill.innerText = `${allItems.length} active`;
-
-            if (!allItems.length) {
-                container.innerHTML = `
-                    <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
-                        <i class="fa-solid fa-cloud-arrow-down" style="font-size: 2rem; color: rgba(255,255,255,0.15); margin-bottom: 0.75rem; display: block;"></i>
-                        No active downloads right now.<br>
-                        <span style="font-size: 0.8rem; color: var(--text-secondary);">Searched items and queued magnets will appear here with live speed & progress.</span>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = allItems.map((item) => {
-                let progress = '0.0';
-                if (item.totalBytes && item.downloadedBytes) {
-                    progress = Math.min(100, Math.max(0, (item.downloadedBytes / item.totalBytes) * 100)).toFixed(1);
-                } else if (typeof item.progress === 'number') {
-                    progress = Math.min(100, Math.max(0, item.progress)).toFixed(1);
-                } else if (typeof item.percent === 'number') {
-                    progress = Math.min(100, Math.max(0, item.percent)).toFixed(1);
-                }
-                const progressNum = parseFloat(progress) || 0;
-                const isComplete = item.status === 'seeding' || item.status === 'complete' || progressNum >= 100;
-                const isPaused = item.status === 'paused';
-                const isQueued = item.status === 'queued';
-                const flag = item.flag || 'movie';
-                const isSeries = flag === 'series';
-
-                let sizeInfo = '';
-                if (item.downloadedBytes && item.totalBytes) {
-                    const dlStr = item.downloadedBytes > 1024 * 1024 * 1024 ? `${(item.downloadedBytes / (1024*1024*1024)).toFixed(2)} GB` : `${(item.downloadedBytes / (1024*1024)).toFixed(1)} MB`;
-                    const totStr = item.totalBytes > 1024 * 1024 * 1024 ? `${(item.totalBytes / (1024*1024*1024)).toFixed(2)} GB` : `${(item.totalBytes / (1024*1024)).toFixed(1)} MB`;
-                    sizeInfo = `(${dlStr} / ${totStr})`;
-                }
-
-                let speedDown = '0 KB/s';
-                if (typeof item.speed === 'number' && item.speed > 0) {
-                    speedDown = item.speed > 1024 * 1024 ? `${(item.speed / (1024 * 1024)).toFixed(2)} MB/s` : `${(item.speed / 1024).toFixed(1)} KB/s`;
-                } else if (typeof item.speed === 'string') {
-                    speedDown = item.speed;
-                } else if (typeof item.downloadSpeed === 'number' && item.downloadSpeed > 0) {
-                    speedDown = item.downloadSpeed > 1024 * 1024 ? `${(item.downloadSpeed / (1024 * 1024)).toFixed(2)} MB/s` : `${(item.downloadSpeed / 1024).toFixed(1)} KB/s`;
-                }
-
-                let speedUp = '0 KB/s';
-                if (typeof item.uploaded === 'number' && item.uploaded > 0) {
-                    speedUp = item.uploaded > 1024 * 1024 ? `${(item.uploaded / (1024 * 1024)).toFixed(2)} MB` : `${(item.uploaded / 1024).toFixed(1)} KB`;
-                } else if (typeof item.uploadSpeed === 'number' && item.uploadSpeed > 0) {
-                    speedUp = item.uploadSpeed > 1024 * 1024 ? `${(item.uploadSpeed / (1024 * 1024)).toFixed(2)} MB/s` : `${(item.uploadSpeed / 1024).toFixed(1)} KB/s`;
-                }
-
-                let statusText = item.status || (isComplete ? 'Complete / Moving' : 'Downloading');
-                let statusColor = isPaused ? 'var(--accent-amber)' : (isComplete ? 'var(--accent-green)' : 'var(--accent-cyan)');
-                let statusIcon = isPaused ? 'fa-circle-pause' : (isComplete ? 'fa-circle-check' : 'fa-circle-down');
-
-                if (isQueued) {
-                    const qPos = item.queue_pos ? `#${item.queue_pos}` : 'in line';
-                    statusText = `Queued (${qPos})`;
-                    statusColor = '#f59e0b';
-                    statusIcon = 'fa-hourglass-half';
-                }
-
-                const torrentId = item.id || item.info_hash || item.infoHash || '';
-                const torrentName = item.name || item.title || 'Fast Storage Download';
-
-                const pauseResumeBtn = isPaused ? `
-                    <button class="btn btn-secondary" onclick="controlTorlinkDownloadAction('${escapeHtml(torrentId)}', 'resume')" style="padding: 0.3rem 0.75rem; font-size: 0.74rem; border-radius: 9999px; color: #30d158; border: 1px solid rgba(48, 209, 88, 0.35); background: rgba(48, 209, 88, 0.12); font-weight: 500;" title="Resume Download / Enter Queue">
-                        <i class="fa-solid fa-play"></i> Resume
-                    </button>
-                ` : `
-                    <button class="btn btn-secondary" onclick="controlTorlinkDownloadAction('${escapeHtml(torrentId)}', 'pause')" style="padding: 0.3rem 0.75rem; font-size: 0.74rem; border-radius: 9999px; color: #ff9f0a; border: 1px solid rgba(255, 159, 10, 0.35); background: rgba(255, 159, 10, 0.12); font-weight: 500;" title="${isQueued ? 'Pause / Hold in Queue' : 'Pause Download'}">
-                        <i class="fa-solid fa-pause"></i> Pause
-                    </button>
-                `;
-
-                return `
-                    <div style="background: rgba(44, 44, 46, 0.55); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
-                            <div style="flex: 1; min-width: 0;">
-                                <strong style="color: #fff; font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; display: block; margin-bottom: 0.3rem; word-break: break-word;" title="${escapeHtml(torrentName)}">
-                                    ${escapeHtml(torrentName)}
-                                </strong>
-                                <div style="font-size: 0.78rem; color: #86868b; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
-                                    <span><i class="fa-solid fa-folder-tree" style="color:${isSeries ? '#bf5af2' : '#64d2ff'};"></i> ${isSeries ? 'Series' : 'Movies'}</span>
-                                    <span class="count-pill" style="font-size:0.72rem; padding:0.15rem 0.6rem; border-radius: 9999px; background: ${item.interface === 'eno1' ? 'rgba(255,159,10,0.15)' : 'rgba(191,90,242,0.15)'}; color: ${item.interface === 'eno1' ? '#ff9f0a' : '#bf5af2'}; border-color: ${item.interface === 'eno1' ? 'rgba(255,159,10,0.35)' : 'rgba(191,90,242,0.35)'};" title="Router: ${item.interface === 'eno1' ? 'Orange (10.0.0.2)' : 'WE (10.0.0.1)'}"><i class="fa-solid fa-tower-broadcast"></i> ${item.interface === 'eno1' ? 'Orange' : 'WE'}</span>
-                                    <span style="color: ${statusColor}; font-weight: 500;">
-                                        <i class="fa-solid ${statusIcon}"></i> ${statusText}
-                                    </span>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
-                                <span class="count-pill" style="border-radius: 9999px; font-weight: 500; font-size: 0.76rem; background: rgba(41, 151, 255, 0.15); color: #2997ff; border-color: rgba(41, 151, 255, 0.3);">
-                                    <i class="fa-solid fa-arrow-down"></i> ${speedDown}
-                                </span>
-                                <span class="count-pill" style="border-radius: 9999px; font-weight: 500; font-size: 0.76rem; background: rgba(48, 209, 88, 0.15); color: #30d158; border-color: rgba(48, 209, 88, 0.3);">
-                                    <i class="fa-solid fa-arrow-up"></i> ${speedUp}
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Apple Rounded Progress Bar Capsule -->
-                        <div style="width: 100%; background: rgba(118, 118, 128, 0.24); border-radius: 9999px; height: 7px; overflow: hidden; position: relative;">
-                            <div style="width: ${progress}%; min-width: ${progressNum > 0 ? '4px' : '0'}; height: 100%; background: ${isComplete ? '#30d158' : (isQueued ? '#ff9f0a' : (isPaused ? '#ffd60a' : '#0071e3'))}; border-radius: 9999px; transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);"></div>
-                        </div>
-
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: #86868b; flex-wrap: wrap; gap: 0.6rem;">
-                            <div>
-                                <span>Progress: <strong style="color: #fff; font-size: 0.85rem;">${progress}%</strong> <span style="margin-left:0.35rem; color:#64d2ff; font-size:0.75rem;">${sizeInfo}</span></span>
-                            </div>
-
-                            <!-- Destination Flag Selector & Controls -->
-                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                <div style="display: inline-flex; align-items: center; gap: 0.25rem; background: rgba(118, 118, 128, 0.16); padding: 2px 4px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.08);">
-                                    <span style="font-size: 0.72rem; color: #86868b; padding-left: 0.3rem; margin-right: 0.15rem;">Move to:</span>
-                                    <button class="btn btn-secondary" onclick="setTorrentMediaFlagAction('${escapeHtml(torrentId)}', 'movie')" style="padding: 0.15rem 0.55rem; font-size: 0.72rem; border-radius: 9999px; border: none; ${!isSeries ? 'background: rgba(100,210,255,0.25); color: #64d2ff; font-weight: 600;' : 'color: #86868b;'}" title="Flag as Movie (Auto-moves to /mnt/fast_storage/SERVER/Movies on completion)">
-                                        <i class="fa-solid fa-film"></i> Movie
-                                    </button>
-                                    <button class="btn btn-secondary" onclick="setTorrentMediaFlagAction('${escapeHtml(torrentId)}', 'series')" style="padding: 0.15rem 0.55rem; font-size: 0.72rem; border-radius: 9999px; border: none; ${isSeries ? 'background: rgba(191,90,242,0.25); color: #bf5af2; font-weight: 600;' : 'color: #86868b;'}" title="Flag as Series (Auto-moves to /mnt/fast_storage/SERVER/Series on completion)">
-                                        <i class="fa-solid fa-tv"></i> Series
-                                    </button>
-                                </div>
-
-                                ${pauseResumeBtn}
-                                <button class="btn btn-secondary" onclick="cancelTorlinkDownloadAction('${escapeHtml(torrentId)}', '${escapeHtml(torrentName)}')" style="padding: 0.3rem 0.75rem; font-size: 0.74rem; border-radius: 9999px; color: #ff453a; border: 1px solid rgba(255,69,58,0.35); background: rgba(255,69,58,0.12); font-weight: 500;" title="Cancel and remove this download">
-                                    <i class="fa-solid fa-xmark"></i> Cancel
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        } catch(e) {
-            container.innerHTML = `<div style="color:var(--text-secondary); text-align:center; padding:1.5rem;">Torlink daemon is in standby. Click Start above or queue a magnet to begin.</div>`;
-        }
-    }
-
-    // ==========================================
     // --- 3. SMART DRIVES & STORAGE FORECAST ---
     // ==========================================
     async function loadSmartStorage() {
@@ -4960,154 +4306,6 @@ ${data.analysis || 'Analysis could not be generated.'}
         } catch (e) {
             showToast('Failed to run watchdog sweep.', 'error');
         }
-    }
-
-    // ==========================================
-    // --- 4. DEV ➔ PROD PROMOTION CONTROLLER ---
-    // ==========================================
-    async function loadPromotionDiff() {
-        const banner = document.getElementById('promotion-summary-banner');
-        const tableContainer = document.getElementById('promotion-diff-table-container');
-
-        try {
-            const res = await fetch('/api/promotion/compare');
-            const data = await res.json();
-
-            if (banner) {
-                banner.innerHTML = `
-                    <div style="background: rgba(18, 18, 18, 0.75); backdrop-filter: blur(16px); padding: 1.25rem 1.5rem; border-radius: 16px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.12); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-                                <i class="fa-solid fa-code-compare"></i>
-                            </div>
-                            <div>
-                                <h3 style="font-size: 1.05rem; font-weight: 700; color: #fff;">Environment Status Matrix</h3>
-                                <p style="font-size: 0.82rem; color: var(--text-secondary);">
-                                    Dev Directory: <code>${data.dev_dir}</code> | Prod Directory: <code>${data.prod_dir}</code>
-                                </p>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 0.75rem; align-items: center;">
-                            <span class="count-pill" style="font-size: 0.85rem; background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); border-color: rgba(6, 182, 212, 0.3);">
-                                ${data.total_files} Total Files
-                            </span>
-                            <span class="count-pill" style="font-size: 0.85rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border-color: rgba(245, 158, 11, 0.3);">
-                                ${data.modified_count} Difference${data.modified_count === 1 ? '' : 's'} Detected
-                            </span>
-                        </div>
-                    </div>
-                `;
-            }
-
-            if (tableContainer) {
-                const files = data.files || [];
-                tableContainer.innerHTML = `
-                    <table class="history-table" style="font-size: 0.82rem;">
-                        <thead>
-                            <tr>
-                                <th>Relative Path</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${files.map(f => `
-                                <tr>
-                                    <td style="font-family:'JetBrains Mono', monospace; color:#fff; font-weight:600;">${f.path}</td>
-                                    <td>
-                                        <span class="count-pill" style="font-size:0.72rem; ${f.status === 'Modified' ? 'background:rgba(6,182,212,0.15); color:var(--accent-cyan); border-color:rgba(6,182,212,0.3);' : f.status === 'New in Dev' ? 'background:rgba(16,185,129,0.15); color:var(--accent-green); border-color:rgba(16,185,129,0.3);' : 'background:rgba(255,255,255,0.05); color:var(--text-secondary);'}">
-                                            ${f.status}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div style="display:flex; gap:0.5rem;">
-                                            <button class="btn btn-secondary" onclick="viewFileDiff('${f.path}')" style="padding:0.25rem 0.6rem; font-size:0.75rem;">
-                                                <i class="fa-solid fa-eye"></i> View Diff
-                                            </button>
-                                            ${f.can_promote ? `
-                                                <button class="btn btn-primary" onclick="promoteSingleFile('${f.path}')" style="padding:0.25rem 0.65rem; font-size:0.75rem;">
-                                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Promote
-                                                </button>
-                                            ` : ''}
-                                        </div>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            }
-        } catch (e) {
-            if (tableContainer) tableContainer.innerHTML = `<div style="color:var(--accent-red);">Error loading environment diff.</div>`;
-        }
-    }
-
-    async function viewFileDiff(path) {
-        document.getElementById('modal-title').innerText = `Diff: ${path}`;
-        document.getElementById('modal-body').innerHTML = `<div class="terminal-box">Computing unified diff...</div>`;
-        document.getElementById('viewer-modal').classList.add('active');
-
-        try {
-            const res = await fetch(`/api/promotion/diff?path=${encodeURIComponent(path)}`);
-            const data = await res.json();
-            document.getElementById('modal-body').innerHTML = `
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-secondary);">
-                        <span>Unified Diff (Prod ➔ Dev)</span>
-                        <button class="btn btn-primary" onclick="promoteSingleFile('${path}'); closeModal();" style="padding: 0.3rem 0.75rem; font-size: 0.78rem;">
-                            <i class="fa-solid fa-cloud-arrow-up"></i> Promote This File
-                        </button>
-                    </div>
-                    <div class="terminal-box" style="max-height: 400px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.5;">${data.diff}</div>
-                </div>
-            `;
-        } catch (e) {
-            document.getElementById('modal-body').innerHTML = `<div class="terminal-box">Error loading diff.</div>`;
-        }
-    }
-
-    async function promoteSingleFile(path) {
-        showConfirm('Promote Single File', `Promote '${path}' from Dev to Production (Port 5999)? A safety backup will be created automatically.`, async () => {
-            try {
-                const res = await fetch('/api/promotion/promote', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ files: [path], restart_service: true })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast(`Promoted '${path}' to Production!`, 'success');
-                    loadPromotionDiff();
-                } else {
-                    showToast(data.error || 'Promotion failed', 'error');
-                }
-            } catch (e) {
-                showToast('Failed to execute promotion', 'error');
-            }
-        });
-    }
-
-    async function confirmPromoteAll() {
-        showConfirm('Push Dev to Production (Port 5999)', 'This will create a full safety backup of Production into /path/to/backups push all verified Dev files, and restart the production service. Proceed?', async () => {
-            showToast('Backing up Prod and pushing verified files...', 'info', 3500);
-            try {
-                const res = await fetch('/api/promotion/promote', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ restart_service: true })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    const info = data.data || {};
-                    showToast(`✅ Prod backed up (${info.backup_size || 'Snapshot'}) & ${info.promoted_files_count || ''} files pushed to Production!`, 'success', 6000);
-                    loadPromotionDiff();
-                } else {
-                    showToast(data.error || 'Promotion failed', 'error');
-                }
-            } catch (e) {
-                showToast('Error during promotion', 'error');
-            }
-        });
     }
 
     function closeModal() {
