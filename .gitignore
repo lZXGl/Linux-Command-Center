@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.env
+.venv
+venv/
+ENV/
+
+# Logs & Archives
+logs/
+*.log
+system_update.log
+backups/
+*.tar.gz
+
+# Local State / Secrets
+custom_scripts.json
+custom_homelab.json
+custom_systemd.json
+telemetry_history.json
+disk_telemetry_history.json
+execution_history.json
+watchdog_incidents.json
+
+# Screenshots
+screenshots/
+*.png
+*.jpg
+*.jpeg
+
+# IDE & OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo

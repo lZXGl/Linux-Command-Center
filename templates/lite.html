@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Command Center [Kiosk Lite]</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <style>
+        * {
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Permanent Pure Black AMOLED Theme */
+        body {
+            background-color: #000000;
+            color: #f0f6fc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.4;
+            padding: 12px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            transition: background-color 0.4s ease;
+        }
+
+        a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        /* Wall Mount Kiosk Header */
+        .kiosk-header {
+            background-color: #080b11;
+            border: 1px solid #161f2e;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 14px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            transition: opacity 0.4s ease;
+        }
+
+        .header-left {
+            float: left;
+        }
+
+        .header-right {
+            float: right;
+            text-align: right;
+        }
+
+        .clock-display {
+            font-size: 38px;
+            font-weight: bold;
+            color: #ffffff;
+            line-height: 1.1;
+            letter-spacing: 1px;
+            cursor: default;
+            -webkit-user-select: none;
+            user-select: none;
+            transition: color 0.4s ease;
+        }
+
+        .date-display {
+            font-size: 16px;
+            color: #94a3b8;
+            font-weight: 500;
+            margin-top: 4px;
+            display: inline-block;
+            vertical-align: middle;
+            transition: color 0.4s ease;
+        }
+
+        .weather-badge {
+            display: inline-block;
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #38bdf8;
+            margin-left: 10px;
+            vertical-align: middle;
+            transition: all 0.4s ease;
+        }
+
+        .header-badges {
+            margin-bottom: 6px;
+            transition: opacity 0.4s ease;
+        }
+
+        .status-pill {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+            margin-left: 6px;
+            transition: opacity 0.4s ease;
+        }
+
+        .status-pill-online {
+            background-color: #064e3b;
+            color: #34d399;
+            border: 1px solid #059669;
+        }
+
+        .status-pill-alert {
+            background-color: #7f1d1d;
+            color: #fca5a5;
+            border: 1px solid #ef4444;
+        }
+
+        .status-pill-uptime {
+            background-color: #0c4a6e;
+            color: #38bdf8;
+            border: 1px solid #0284c7;
+        }
+
+        .btn-top {
+            background-color: #111827;
+            color: #e2e8f0;
+            border: 1px solid #233044;
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            transition: opacity 0.4s ease;
+        }
+
+        .btn-top:active {
+            background-color: #388bfd;
+            color: #ffffff;
+        }
+
+        .clearfix:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        @media (max-width: 640px) {
+            .header-left, .header-right {
+                float: none;
+                text-align: center;
+                width: 100%;
+            }
+            .header-right {
+                margin-top: 12px;
+            }
+            .status-pill {
+                margin: 4px;
+            }
+            .clock-display {
+                font-size: 32px;
+            }
+            .weather-badge {
+                margin-left: 4px;
+                margin-top: 4px;
+            }
+        }
+
+        /* Banner Notification */
+        #banner {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            font-weight: bold;
+            font-size: 15px;
+            text-align: center;
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Section Headings */
+        .section-header {
+            font-size: 15px;
+            font-weight: bold;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.9px;
+            margin: 18px 4px 8px 4px;
+            transition: opacity 0.4s ease;
+        }
+
+        /* Grid System (100% Android 4 WebKit / Opera compatible) */
+        .row {
+            margin-left: -5px;
+            margin-right: -5px;
+            overflow: hidden;
+            transition: opacity 0.4s ease;
+        }
+
+        .col-4 {
+            float: left;
+            width: 25%;
+            padding: 5px;
+        }
+
+        .col-3 {
+            float: left;
+            width: 33.333%;
+            padding: 5px;
+        }
+
+        .col-2 {
+            float: left;
+            width: 50%;
+            padding: 5px;
+        }
+
+        .col-1 {
+            float: left;
+            width: 100%;
+            padding: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .col-4 { width: 50%; }
+            .col-3 { width: 50%; }
+            .col-2 { width: 100%; }
+        }
+
+        @media (max-width: 480px) {
+            .col-4 { width: 100%; }
+            .col-3 { width: 100%; }
+        }
+
+        /* Cards */
+        .card {
+            background-color: #080b11;
+            border: 1px solid #161f2e;
+            border-radius: 8px;
+            padding: 12px 14px;
+            position: relative;
+            transition: opacity 0.4s ease;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #8b949e;
+            font-weight: bold;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-val {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffffff;
+            line-height: 1.2;
+        }
+
+        .stat-sub {
+            font-size: 12px;
+            color: #8b949e;
+            margin-top: 4px;
+        }
+
+        /* Progress Bars */
+        .progress-bg {
+            background-color: #000000;
+            border: 1px solid #161f2e;
+            border-radius: 4px;
+            height: 10px;
+            overflow: hidden;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #10b981;
+            width: 0%;
+            -webkit-transition: width 0.3s ease;
+            transition: width 0.3s ease;
+        }
+
+        .bar-warn { background-color: #f59e0b !important; }
+        .bar-danger { background-color: #ef4444 !important; }
+
+        /* Action Buttons */
+        .action-btn {
+            background-color: #0d121c;
+            border: 1px solid #233044;
+            border-radius: 8px;
+            color: #f0f6fc;
+            padding: 14px 10px;
+            font-size: 15px;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            text-decoration: none;
+            -webkit-user-select: none;
+            user-select: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .action-btn:active {
+            background-color: #388bfd;
+            color: #ffffff;
+            border-color: #58a6ff;
+        }
+
+        .btn-green {
+            background-color: #064e3b;
+            border-color: #059669;
+            color: #6ee7b7;
+        }
+
+        .btn-green:active {
+            background-color: #10b981;
+            color: #ffffff;
+        }
+
+        .btn-cyan {
+            background-color: #083344;
+            border-color: #0891b2;
+            color: #67e8f9;
+        }
+
+        .btn-cyan:active {
+            background-color: #06b6d4;
+            color: #ffffff;
+        }
+
+        .btn-purple {
+            background-color: #3b0764;
+            border-color: #7e22ce;
+            color: #d8b4fe;
+        }
+
+        .btn-purple:active {
+            background-color: #9333ea;
+            color: #ffffff;
+        }
+
+        .btn-orange {
+            background-color: #451a03;
+            border-color: #d97706;
+            color: #fcd34d;
+        }
+
+        .btn-orange:active {
+            background-color: #f59e0b;
+            color: #ffffff;
+        }
+
+        .btn-red {
+            background-color: #450a0a;
+            border-color: #dc2626;
+            color: #fca5a5;
+        }
+
+        .btn-red:active {
+            background-color: #ef4444;
+            color: #ffffff;
+        }
+
+        /* Homelab & Services Cards */
+        .service-card {
+            background-color: #080b11;
+            border: 1px solid #161f2e;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            transition: opacity 0.4s ease;
+        }
+
+        .service-card-top {
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .service-card-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            float: left;
+            line-height: 24px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 60%;
+        }
+
+        .service-card-status {
+            float: right;
+        }
+
+        .service-card-bottom {
+            overflow: hidden;
+            border-top: 1px solid #161f2e;
+            padding-top: 8px;
+        }
+
+        .service-card-port {
+            font-size: 13px;
+            color: #64748b;
+            float: left;
+            line-height: 26px;
+            font-family: monospace;
+        }
+
+        .service-card-action {
+            float: right;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        .badge-online {
+            background-color: #064e3b;
+            color: #6ee7b7;
+            border: 1px solid #059669;
+        }
+
+        .badge-offline {
+            background-color: #450a0a;
+            color: #fca5a5;
+            border: 1px solid #dc2626;
+        }
+
+        .btn-mini {
+            background-color: #111827;
+            border: 1px solid #233044;
+            color: #f0f6fc;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+
+        .btn-mini:active {
+            background-color: #388bfd;
+            color: #ffffff;
+        }
+
+        /* Script Tiles */
+        .script-tile {
+            background-color: #080b11;
+            border: 1px solid #161f2e;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            transition: opacity 0.4s ease;
+        }
+
+        .script-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #f0f6fc;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .script-cat {
+            font-size: 12px;
+            color: #38bdf8;
+            margin-bottom: 10px;
+        }
+
+        /* Filter Tabs */
+        .tabs {
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: opacity 0.4s ease;
+        }
+
+        .tab-btn {
+            background-color: #080b11;
+            border: 1px solid #161f2e;
+            color: #8b949e;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-right: 6px;
+            margin-bottom: 6px;
+            float: left;
+        }
+
+        .tab-btn.active {
+            background-color: #0284c7;
+            color: #ffffff;
+            border-color: #38bdf8;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px 0 12px 0;
+            color: #475569;
+            font-size: 12px;
+            cursor: pointer;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* --- Cohesive Screen Dimmed Mode (Everything Dims Together) --- */
+        body.screen-dimmed .clock-display {
+            color: #64748b !important;
+        }
+
+        body.screen-dimmed .date-display {
+            color: #334155 !important;
+        }
+
+        body.screen-dimmed .weather-badge {
+            color: #334155 !important;
+            background: #000000 !important;
+            border-color: #161f2e !important;
+        }
+
+        body.screen-dimmed .header-badges,
+        body.screen-dimmed .status-pill,
+        body.screen-dimmed .btn-top,
+        body.screen-dimmed .card,
+        body.screen-dimmed .service-card,
+        body.screen-dimmed .script-tile,
+        body.screen-dimmed .action-btn,
+        body.screen-dimmed .section-header,
+        body.screen-dimmed .prayer-bar,
+        body.screen-dimmed .tabs {
+            opacity: 0.22 !important;
+        }
+
+        /* Cairo Prayer Times Bar */
+        .prayer-bar {
+            background-color: #080b11;
+            border: 1px solid #161f2e;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            transition: opacity 0.4s ease;
+        }
+
+        .prayer-top {
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .prayer-title-text {
+            font-size: 11px;
+            font-weight: bold;
+            color: #8b949e;
+            letter-spacing: 0.8px;
+            float: left;
+        }
+
+        .prayer-hijri {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 500;
+            float: right;
+        }
+
+        .prayer-times-grid {
+            overflow: hidden;
+        }
+
+        .prayer-item {
+            float: left;
+            width: 14%;
+            text-align: center;
+            padding: 5px 2px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .prayer-item .p-name {
+            display: block;
+            font-size: 10px;
+            font-weight: bold;
+            color: #64748b;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .prayer-item .p-time {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            color: #cbd5e1;
+            font-family: monospace;
+        }
+
+        .prayer-item.active-next {
+            background-color: #064e3b;
+            border-color: #059669;
+        }
+
+        .prayer-item.active-next .p-name {
+            color: #34d399;
+        }
+
+        .prayer-item.active-next .p-time {
+            color: #ffffff;
+        }
+
+        .prayer-countdown-col {
+            float: right;
+            width: 30%;
+            text-align: right;
+            padding-top: 4px;
+        }
+
+        .prayer-next-badge {
+            display: inline-block;
+            background: #0c4a6e;
+            color: #38bdf8;
+            border: 1px solid #0284c7;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0.3px;
+        }
+
+        .prayer-next-imminent {
+            background: #064e3b !important;
+            color: #34d399 !important;
+            border-color: #059669 !important;
+        }
+
+        @media (max-width: 640px) {
+            .prayer-item { width: 20%; }
+            .prayer-countdown-col { width: 100%; text-align: center; margin-top: 6px; float: none; }
+        }
+
+        #confirm-modal .action-btn {
+            opacity: 1 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- In-Page Touch Confirmation Modal (100% Android 4.0.4 & Kiosk Compatible) -->
+    <div id="confirm-modal" onclick="closeConfirmModal()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000000; background:rgba(0,0,0,0.85); z-index:99999; text-align:center; padding-top:16vh;">
+        <div onclick="if(event && event.stopPropagation){event.stopPropagation();}if(window.event){window.event.cancelBubble=true;}" style="display:inline-block; width:88%; max-width:400px; background:#0d121c; border:2px solid #233044; border-radius:12px; padding:22px 18px; text-align:center; box-sizing:border-box;">
+            <div id="confirm-title" style="font-size:20px; font-weight:bold; color:#ffffff; margin-bottom:10px;">Confirm Action</div>
+            <div id="confirm-message" style="font-size:16px; color:#cbd5e1; margin-bottom:22px; line-height:1.4;">Are you sure?</div>
+            <div style="overflow:hidden;">
+                <div style="float:left; width:48%;">
+                    <button type="button" class="action-btn" style="background:#1e293b; border-color:#334155; color:#94a3b8; padding:14px 0; width:100%; cursor:pointer; font-size:15px; font-weight:bold;" onclick="closeConfirmModal()">CANCEL</button>
+                </div>
+                <div style="float:right; width:48%;">
+                    <button type="button" id="confirm-btn-ok" class="action-btn btn-green" style="padding:14px 0; width:100%; cursor:pointer; font-size:15px; font-weight:bold;" onclick="onConfirmModalOk()">RUN NOW</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wall Mount Kiosk Header -->
+    <div class="kiosk-header clearfix">
+        <div class="header-left">
+            <div id="clock" class="clock-display">--:--</div>
+            <div style="margin-top: 4px;">
+                <span id="date-display" class="date-display">Loading Date...</span>
+                <span id="weather-badge" class="weather-badge">Weather...</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-badges">
+                <span id="server-status-pill" class="status-pill status-pill-online">SERVER ONLINE</span>
+                <span id="header-uptime" class="status-pill status-pill-uptime">Uptime: --</span>
+            </div>
+            <div style="margin-top: 8px;">
+                <button class="btn-top" onclick="refreshAll()">Refresh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Banner -->
+    <div id="banner"></div>
+
+    <!-- Cairo Prayer Times Bar -->
+    <div id="prayer-bar" class="prayer-bar">
+        <div class="prayer-top">
+            <span class="prayer-title-text">PRAYER TIMES (CAIRO)</span>
+            <span id="prayer-hijri" class="prayer-hijri">Loading Hijri Date...</span>
+        </div>
+        <div class="prayer-times-grid">
+            <div id="p-fajr" class="prayer-item">
+                <span class="p-name">FAJR</span>
+                <span id="t-fajr" class="p-time">--:--</span>
+            </div>
+            <div id="p-dhuhr" class="prayer-item">
+                <span class="p-name">DHUHR</span>
+                <span id="t-dhuhr" class="p-time">--:--</span>
+            </div>
+            <div id="p-asr" class="prayer-item">
+                <span class="p-name">ASR</span>
+                <span id="t-asr" class="p-time">--:--</span>
+            </div>
+            <div id="p-maghrib" class="prayer-item">
+                <span class="p-name">MAGHRIB</span>
+                <span id="t-maghrib" class="p-time">--:--</span>
+            </div>
+            <div id="p-isha" class="prayer-item">
+                <span class="p-name">ISHA</span>
+                <span id="t-isha" class="p-time">--:--</span>
+            </div>
+            <div class="prayer-countdown-col">
+                <span id="prayer-countdown-badge" class="prayer-next-badge">Next: Calculating...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Vitals -->
+    <div class="section-header">Server Vitals</div>
+    <div class="row">
+        <div class="col-4">
+            <div class="card">
+                <div class="stat-label">CPU USAGE</div>
+                <div id="cpu-val" class="stat-val">--%</div>
+                <div id="cpu-sub" class="stat-sub">Temp: --</div>
+                <div class="progress-bg">
+                    <div id="cpu-bar" class="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="stat-label">RAM USAGE</div>
+                <div id="ram-val" class="stat-val">--%</div>
+                <div id="ram-sub" class="stat-sub">Memory load</div>
+                <div class="progress-bg">
+                    <div id="ram-bar" class="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="stat-label">PRIMARY DISK (M.2)</div>
+                <div id="disk1-val" class="stat-val">--%</div>
+                <div id="disk1-sub" class="stat-sub">Free: --</div>
+                <div class="progress-bg">
+                    <div id="disk1-bar" class="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="stat-label">SECONDARY DISK (HDD)</div>
+                <div id="disk2-val" class="stat-val">--%</div>
+                <div id="disk2-sub" class="stat-sub">Free: --</div>
+                <div class="progress-bg">
+                    <div id="disk2-bar" class="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Homelab & Media Live Telemetry -->
+    <div class="section-header">Homelab & Media Telemetry</div>
+    <div class="row">
+        <div class="col-3">
+            <div class="card">
+                <div class="stat-label">ADBLOCK PROTECTION</div>
+                <div id="telemetry-adblock" class="stat-val">--</div>
+                <div id="telemetry-adblock-sub" class="stat-sub">DNS Shield Active</div>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card">
+                <div class="stat-label">DOCKER CONTAINERS</div>
+                <div id="telemetry-docker" class="stat-val">--</div>
+                <div id="telemetry-docker-sub" class="stat-sub">All healthy</div>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="card">
+                <div class="stat-label">MEDIA SERVER (JELLYFIN)</div>
+                <div id="telemetry-jellyfin" class="stat-val">ONLINE</div>
+                <div id="telemetry-jellyfin-sub" class="stat-sub">Port 8096 active</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Quick Actions & Wall Switches -->
+    <div class="section-header">Maintenance & Wall Switches</div>
+    <div class="row">
+        <div class="col-3">
+            <button id="btn-adblock" class="action-btn btn-cyan" onclick="toggleDnsPause()">
+                Pause AdBlock (5m)
+            </button>
+        </div>
+        <div class="col-3">
+            <button class="action-btn btn-purple" onclick="runMaintenanceBatch()">
+                Run All Maintenance
+            </button>
+        </div>
+        <div class="col-3">
+            <button class="action-btn btn-red" onclick="rebootServer()">
+                Reboot Server
+            </button>
+        </div>
+    </div>
+
+    <!-- Homelab Services -->
+    <div class="section-header">Homelab Services (Live Status)</div>
+    <div id="services-container" class="row">
+        <div class="col-1"><div class="card">Loading services...</div></div>
+    </div>
+
+    <!-- Automation Scripts -->
+    <div class="section-header">Automation Scripts Switchboard</div>
+    <div class="tabs clearfix">
+        <button id="tab-all" class="tab-btn active" onclick="setTab('all')">All</button>
+        <button id="tab-maintenance" class="tab-btn" onclick="setTab('Maintenance')">Maintenance</button>
+        <button id="tab-custom" class="tab-btn" onclick="setTab('Custom Scripts')">Custom</button>
+    </div>
+    <div id="scripts-container" class="row">
+        <div class="col-1"><div class="card">Loading automation scripts...</div></div>
+    </div>
+
+    <div class="footer" onclick="testPixelShift()">
+        Linux Command Center &bull; Low Bandwidth Mode &bull; Mobile & Android Compatible
+    </div>
+
+    <script>
+        // --- 100% Strict ES5 JavaScript for Android 4.0.4 & Opera Compatibility ---
+
+        var allScripts = [];
+        var activeTab = 'all';
+        var bannerTimer = null;
+        var localKioskToken = null;
+        var isDnsPaused = false;
+
+        var idleSeconds = 0;
+
+        function isScreenDimmed() {
+            return document.body.className.indexOf('screen-dimmed') > -1;
+        }
+
+        // Reusable AJAX Helper (Standard XMLHttpRequest)
+        function ajax(url, method, data, callback) {
+            var xhr = new XMLHttpRequest();
+            xhr.open(method || 'GET', url, true);
+            if (data) {
+                xhr.setRequestHeader('Content-Type', 'application/json');
+            }
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        var res = null;
+                        try {
+                            res = JSON.parse(xhr.responseText);
+                        } catch(e) {
+                            res = xhr.responseText;
+                        }
+                        if (callback) callback(null, res);
+                    } else {
+                        var errRes = null;
+                        try {
+                            errRes = JSON.parse(xhr.responseText);
+                        } catch(e) {
+                            errRes = { error: 'Request failed: ' + xhr.status };
+                        }
+                        if (callback) callback(errRes || 'Error ' + xhr.status);
+                    }
+                }
+            };
+            xhr.send(data ? JSON.stringify(data) : null);
+        }
+
+        // Live Clock & Full Date (Hours & Minutes only - No seconds anywhere)
+        var lastRenderedMin = -1;
+        function updateClockAndDate() {
+            var d = new Date();
+            var curM = d.getMinutes();
+            if (curM === lastRenderedMin) {
+                return; // Only redraw when minute changes
+            }
+            lastRenderedMin = curM;
+
+            var h = d.getHours();
+            var m = d.getMinutes();
+            var ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12;
+            h = h ? h : 12;
+            var hStr = (h < 10 ? '0' : '') + h;
+            var mStr = (m < 10 ? '0' : '') + m;
+            var timeFormatted = hStr + ':' + mStr + ' ' + ampm;
+
+            document.getElementById('clock').innerHTML = timeFormatted;
+
+            var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            var dayName = days[d.getDay()];
+            var monthName = months[d.getMonth()];
+            var dateNum = d.getDate();
+            var year = d.getFullYear();
+            var dateFormatted = dayName + ', ' + monthName + ' ' + dateNum + ', ' + year;
+
+            document.getElementById('date-display').innerHTML = dateFormatted;
+        }
+        setInterval(updateClockAndDate, 1000);
+        updateClockAndDate();
+
+        // 1. Weather Widget (Cached 30 min on server -> 0 KB tablet data)
+        function loadWeather() {
+            ajax('/api/weather', 'GET', null, function(err, data) {
+                if (err || !data) return;
+                var txt = (data.temp ? data.temp + ' ' : '') + (data.condition || '');
+                var badge = document.getElementById('weather-badge');
+                if (badge) badge.innerHTML = txt;
+            });
+        }
+        loadWeather();
+        setInterval(function() {
+            if (document.hidden) return;
+            loadWeather();
+        }, 1800000); // 30 minutes
+
+        // 2. Cairo Prayer Times Engine (Cached 12h on Server -> 0 KB Tablet Data)
+        var prayerTimings = null;
+
+        function loadPrayerTimes() {
+            ajax('/api/prayer', 'GET', null, function(err, data) {
+                if (err || !data || !data.timings) return;
+                prayerTimings = data.timings;
+                document.getElementById('t-fajr').innerHTML = prayerTimings.Fajr || '--:--';
+                document.getElementById('t-dhuhr').innerHTML = prayerTimings.Dhuhr || '--:--';
+                document.getElementById('t-asr').innerHTML = prayerTimings.Asr || '--:--';
+                document.getElementById('t-maghrib').innerHTML = prayerTimings.Maghrib || '--:--';
+                document.getElementById('t-isha').innerHTML = prayerTimings.Isha || '--:--';
+                if (data.hijri) {
+                    document.getElementById('prayer-hijri').innerHTML = data.hijri;
+                }
+                updatePrayerCountdown();
+            });
+        }
+
+        function updatePrayerCountdown() {
+            if (!prayerTimings || isScreenDimmed()) return;
+            var now = new Date();
+            var curMin = now.getHours() * 60 + now.getMinutes();
+
+            function timeToMin(tStr) {
+                if (!tStr) return 0;
+                var parts = tStr.split(':');
+                return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+            }
+
+            var prayers = [
+                { id: 'p-fajr', name: 'Fajr', min: timeToMin(prayerTimings.Fajr) },
+                { id: 'p-dhuhr', name: 'Dhuhr', min: timeToMin(prayerTimings.Dhuhr) },
+                { id: 'p-asr', name: 'Asr', min: timeToMin(prayerTimings.Asr) },
+                { id: 'p-maghrib', name: 'Maghrib', min: timeToMin(prayerTimings.Maghrib) },
+                { id: 'p-isha', name: 'Isha', min: timeToMin(prayerTimings.Isha) }
+            ];
+
+            for (var i = 0; i < prayers.length; i++) {
+                var el = document.getElementById(prayers[i].id);
+                if (el) {
+                    el.className = el.className.replace(/\bactive-next\b/g, '').trim();
+                }
+            }
+
+            var nextPrayer = null;
+            var diffMin = 0;
+
+            for (var j = 0; j < prayers.length; j++) {
+                if (prayers[j].min > curMin) {
+                    nextPrayer = prayers[j];
+                    diffMin = prayers[j].min - curMin;
+                    break;
+                }
+            }
+
+            if (!nextPrayer) {
+                nextPrayer = prayers[0];
+                diffMin = (24 * 60 - curMin) + prayers[0].min;
+            }
+
+            var nextEl = document.getElementById(nextPrayer.id);
+            if (nextEl) {
+                nextEl.className = (nextEl.className + ' active-next').trim();
+            }
+
+            var h = Math.floor(diffMin / 60);
+            var m = diffMin % 60;
+            var timeStr = (h > 0 ? h + 'h ' : '') + m + 'm';
+
+            var badge = document.getElementById('prayer-countdown-badge');
+            if (badge) {
+                badge.innerHTML = 'Next: ' + nextPrayer.name + ' in ' + timeStr;
+                if (diffMin <= 15) {
+                    badge.className = 'prayer-next-badge prayer-next-imminent';
+                } else {
+                    badge.className = 'prayer-next-badge';
+                }
+            }
+        }
+
+        loadPrayerTimes();
+        setInterval(function() {
+            if (document.hidden || isScreenDimmed()) return;
+            loadPrayerTimes();
+        }, 10800000); // 3 hours
+        setInterval(updatePrayerCountdown, 30000); // Update countdown every 30s
+
+        // 3. Screen Dimming & Idle Freeze (50s idle timeout)
+        function wakeScreen() {
+            idleSeconds = 0;
+            if (isScreenDimmed()) {
+                document.body.className = document.body.className.replace(/\bscreen-dimmed\b/g, '').trim();
+                loadStats();
+                loadServices();
+                loadScripts();
+                updateClockAndDate();
+                updatePrayerCountdown();
+            }
+        }
+
+        // Auto-dim idle check (50s idle)
+        setInterval(function() {
+            idleSeconds++;
+            if (idleSeconds >= 50 && !isScreenDimmed()) {
+                document.body.className = (document.body.className + ' screen-dimmed').trim();
+            }
+        }, 1000);
+
+        function handleUserActivity() {
+            wakeScreen();
+        }
+
+        window.onload = wakeScreen;
+        document.ontouchstart = handleUserActivity;
+        document.onclick = handleUserActivity;
+        document.onkeydown = handleUserActivity;
+
+        // 4. Thermal Alert Audio Beep (Triggered ONLY by high CPU temperature >= 75C, NOT usage)
+        var lastTempBeepTime = 0;
+        var alertAudio = null;
+
+        function playThermalBeep() {
+            try {
+                if (!alertAudio) {
+                    alertAudio = new Audio('data:audio/wav;base64,UklGRkQIAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSAIAACAgIGCgX57eXp/hYmJhXx0cXR9iZGRiXxvaW17jJiaj3xpYGZ3jp+ilX1lWF1zj6WrnH9iUVVtj6uzpINfSUxnjrC8rIdeQkNgjLTEtY1dPDpYibfMv5NeNzBPhbnUyJpfMidGgLvb0qNiLR48ebvi3KxmKhUxcrro5rRrKxIra7Tm6LpyLxInZK7j6sB5NBIjXqjg7MaAORMfV6Hc7cuGPxUcUZvY7dCNRRcZS5TU7tSUSxkXRY3Q7dibURwVP4bL7dyhVx8TOYDG7OCoXiMSNHnA6uOuZCcSL3K66Oa0aysSK2u05ui6ci8SJ2Su4+rAeTQSI16o4OzGfzkTH1eh3O3Lhj8VHFGb2O3QjUUXGUuU1O7UlEsZF0WN0O3Ym1EcFT+Gy+3coVcfEzl/xuzgqF4jEjR5wOrjrmQnEi9yuujmtGsrEitrtObounIvEidkruPqwHk0EiNeqODsxn85Ex9Xodzty4Y/FRxRm9jt0I1FFxlLlNTu1JRLGRdFjdDt2JtRHBU/hsvt3KFXHxM5gMbs4KheIxI0ecDq465kJxIvcrro5rRrKxIra7Tm6LpyLxInZK7j6sB5NBIjXqjg7MZ/ORMfV6Hc7cuGPxUcUZvY7dCNRRcZS5TU7tSUSxkXRY3Q7dibURwVP4bL7dyhVx8TOYDG7OCoXiMSNHnA6uOuZCcSL3K66Oa0aysSK2u05ui6ci8SJ2Su4+rAeTQSI16o4OzGfzkTH1eh3O3Lhj8VHFGb2O3QjUUXGUuU1O7UlEsZF0WN0O3Ym1EcFT+Gy+3coVcfEzl/xuzgqF4jEjR5wOrjrmQnEi9yuujmtGsrEitrtObounIvEidkruPqwHk0EiNeqODsxoA5Ex9Xodzty4Y/FRxRm9jt0I1FFxlLlNTu1JRLGRdFjc7q1ZlTIx1EhsPh0p1cLSREgLnYzaBlNytGerDPyKFsQDNIdqfFw6JySjtLc5+8vaF4U0NPcZiztqB8W0xUcJKqrp1/Y1RacIyip5qCal1gcYiZn5aDcGVnc4SSlpCDdm5udoKLjouDenZ2eoCFhoSBfn1+f4CAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYKBfnt5en+FiYmFfHRxdH2JkZGJfG9pbXuMmJqPfGlgZneOn6KVfWVYXXOPpaucf2JRVW2Pq7Okg19JTGeOsLysh15CQ2CMtMS1jV08OliJt8y/k143ME+FudTIml8yJ0aAu9vSo2ItHjx5u+LcrGYqFTFyuujmtGsrEitrtObounIvEidkruPqwHk0EiNeqODsxoA5Ex9Xodzty4Y/FRxRm9jt0I1FFxlLlNTu1JRLGRdFjdDt2JtRHBU/hsvt3KFXHxM5gMbs4KheIxI0ecDq465kJxIvcrro5rRrKxIra7Tm6LpyLxInZK7j6sB5NBIjXqjg7MZ/ORMfV6Hc7cuGPxUcUZvY7dCNRRcZS5TU7tSUSxkXRY3Q7dibURwVP4bL7dyhVx8TOX/G7OCoXiMSNHnA6uOuZCcSL3K66Oa0aysSK2u05ui6ci8SJ2Su4+rAeTQSI16o4OzGfzkTH1eh3O3Lhj8VHFGb2O3QjUUXGUuU1O7UlEsZF0WN0O3Ym1EcFT+Gy+3coVcfEzmAxuzgqF4jEjR5wOrjrmQnEi9yuujmtGsrEitrtObounIvEidkruPqwHk0EiNeqODsxn85Ex9Xodzty4Y/FRxRm9jt0I1FFxlLlNTu1JRLGRdFjdDt2JtRHBU/hsvt3KFXHxM5gMbs4KheIxI0ecDq465kJxIvcrro5rRrKxIra7Tm6LpyLxInZK7j6sB5NBIjXqjg7MZ/ORMfV6Hc7cuGPxUcUZvY7dCNRRcZS5TU7tSUSxkXRY3Q7dibURwVP4bL7dyhVx8TOX/G7OCoXiMSNHnA6uOuZCcSL3K66Oa0aysSK2u05ui6ci8SJ2Su4+rAeTQSI16o4OzGgDkTH1eh3O3Lhj8VHFGb2O3QjUUXGUuU1O7UlEsZF0WNzurVmVMjHUSGw+HSnVwtJESAudjNoGU3K0Z6sM/IoWxAM0h2p8XDonJKO0tzn7y9oXhTQ09xmLO2oHxbTFRwkqqunX9jVFpwjKKnmoJqXWBxiJmfloNwZWdzhJKWkIN2bm52gouOi4N6dnZ6gIWGhIF+fX5/');
+                }
+                alertAudio.play();
+            } catch(e) {}
+        }
+
+        // 5. Burn-in Protection (Subtle 2px Pixel Shift every 15 min)
+        var burnInStep = 0;
+        function shiftPixels() {
+            burnInStep = (burnInStep + 1) % 4;
+            var paddings = ['12px 12px', '14px 10px', '10px 14px', '13px 11px'];
+            document.body.style.padding = paddings[burnInStep];
+            try {
+                console.log('[Burn-in Protection] Pixel Shift: Step ' + (burnInStep + 1) + ' (' + paddings[burnInStep] + ')');
+            } catch(e) {}
+        }
+        setInterval(shiftPixels, 900000);
+
+        function testPixelShift() {
+            shiftPixels();
+            var desc = ['Step 1 (Default 12px)', 'Step 2 (+2px Down, -2px Left)', 'Step 3 (-2px Up, +2px Right)', 'Step 4 (+1px Down, -1px Left)'];
+            showBanner('Pixel Shift Active: ' + desc[burnInStep], false);
+        }
+
+        // 4. Touch-Friendly In-Page Confirmation Modal (Kiosk & Legacy Android Safe)
+        var pendingConfirmCallback = null;
+
+        function showConfirm(title, message, btnText, btnClass, onOk) {
+            wakeScreen();
+            pendingConfirmCallback = onOk;
+            document.getElementById('confirm-title').innerHTML = title || 'Confirm Action';
+            document.getElementById('confirm-message').innerHTML = message || 'Are you sure you want to proceed?';
+            var okBtn = document.getElementById('confirm-btn-ok');
+            okBtn.innerHTML = btnText || 'RUN NOW';
+            okBtn.className = 'action-btn ' + (btnClass || 'btn-green');
+            document.getElementById('confirm-modal').style.display = 'block';
+        }
+
+        function closeConfirmModal() {
+            pendingConfirmCallback = null;
+            document.getElementById('confirm-modal').style.display = 'none';
+        }
+
+        function onConfirmModalOk() {
+            var cb = pendingConfirmCallback;
+            closeConfirmModal();
+            if (cb) {
+                cb();
+            }
+        }
+
+        // 5. 1-Tap DNS AdBlock Pause Switch (With Touch Confirmation)
+        function toggleDnsPause() {
+            var btn = document.getElementById('btn-adblock');
+            if (!isDnsPaused) {
+                showConfirm('AdBlock Shield', 'Pause DNS AdBlock protection for 5 minutes?', 'PAUSE (5M)', 'btn-orange', function() {
+                    showBanner('Pausing DNS AdBlock for 5 minutes...', false);
+                    ajax('/api/dns/pause', 'POST', { duration: '5m' }, function(err, res) {
+                        if (err) {
+                            showBanner('Failed to pause DNS: ' + (err.error || 'error'), true);
+                        } else {
+                            isDnsPaused = true;
+                            btn.className = 'action-btn btn-orange';
+                            btn.innerHTML = 'Resume AdBlock (Paused 5m)';
+                            showBanner('AdBlock paused for 5 min! Tap button anytime to resume.', false);
+                        }
+                    });
+                });
+            } else {
+                showConfirm('AdBlock Shield', 'Resume DNS AdBlock protection now?', 'RESUME NOW', 'btn-cyan', function() {
+                    showBanner('Resuming DNS AdBlock shield...', false);
+                    ajax('/api/dns/resume', 'POST', {}, function(err, res) {
+                        if (err) {
+                            showBanner('Failed to resume DNS', true);
+                        } else {
+                            isDnsPaused = false;
+                            btn.className = 'action-btn btn-cyan';
+                            btn.innerHTML = 'Pause AdBlock (5m)';
+                            showBanner('DNS AdBlock Shield Active!', false);
+                        }
+                    });
+                });
+            }
+        }
+
+        // Notification Banner
+        function showBanner(msg, isError) {
+            var b = document.getElementById('banner');
+            b.style.display = 'block';
+            b.style.backgroundColor = isError ? '#991b1b' : '#065f46';
+            b.innerHTML = msg;
+            if (bannerTimer) clearTimeout(bannerTimer);
+            bannerTimer = setTimeout(function() {
+                b.style.display = 'none';
+            }, 5000);
+        }
+
+        // Remote Kiosk Reload Check
+        function checkRemoteReload(token) {
+            if (!token) return;
+            if (localKioskToken === null) {
+                localKioskToken = token;
+            } else if (token > localKioskToken) {
+                showBanner('Remote reset signal received from Main Dashboard! Reloading...', false);
+                setTimeout(function() {
+                    window.location.reload(true);
+                }, 800);
+            }
+        }
+
+        // Color helper for progress bars
+        function applyBarColor(el, pct) {
+            el.style.width = pct + '%';
+            el.className = 'progress-bar';
+            if (pct >= 85) {
+                el.className += ' bar-danger';
+            } else if (pct >= 65) {
+                el.className += ' bar-warn';
+            }
+        }
+
+        // 6. Load System Stats & Thermal / High Load Alert
+        function loadStats() {
+            ajax('/api/system/stats', 'GET', null, function(err, data) {
+                if (err || !data) return;
+
+                if (data.kiosk_reload_token) {
+                    checkRemoteReload(data.kiosk_reload_token);
+                }
+
+                if (data.uptime) {
+                    document.getElementById('header-uptime').innerHTML = 'Uptime: ' + data.uptime;
+                }
+
+                // Thermal & High Load Alert (Visual Pill)
+                var cpuTempNum = parseInt(data.cpu_temp) || 0;
+                var cpuPct = parseInt(data.cpu_percent) || 0;
+                var d1Pct = parseInt(data.disk1) || 0;
+                var isHot = (cpuTempNum >= 75 || cpuPct >= 90 || d1Pct >= 92);
+                var statusPill = document.getElementById('server-status-pill');
+                if (statusPill) {
+                    if (isHot) {
+                        statusPill.className = 'status-pill status-pill-alert';
+                        statusPill.innerHTML = 'HOT: ' + (data.cpu_temp || '') + ' (CPU ' + cpuPct + '%)';
+                    } else {
+                        statusPill.className = 'status-pill status-pill-online';
+                        statusPill.innerHTML = 'SERVER ONLINE';
+                    }
+                }
+
+                // Thermal Alert Beep (Triggered STRICTLY by high CPU temperature >= 75C, NOT CPU/RAM/Disk load)
+                if (cpuTempNum >= 75) {
+                    var nowTime = new Date().getTime();
+                    if (nowTime - lastTempBeepTime > 300000) { // 5-minute cooldown
+                        lastTempBeepTime = nowTime;
+                        playThermalBeep();
+                    }
+                }
+
+                // CPU
+                document.getElementById('cpu-val').innerHTML = data.cpu_percent || '0%';
+                document.getElementById('cpu-sub').innerHTML = 'Temp: ' + (data.cpu_temp || 'N/A');
+                applyBarColor(document.getElementById('cpu-bar'), cpuPct);
+
+                // RAM
+                var ramPct = parseInt(data.ram_percent) || 0;
+                document.getElementById('ram-val').innerHTML = data.ram_percent || '0%';
+                applyBarColor(document.getElementById('ram-bar'), ramPct);
+
+                // Disk 1
+                var d1Str = data.disk1 || '';
+                document.getElementById('disk1-val').innerHTML = d1Pct + '%';
+                document.getElementById('disk1-sub').innerHTML = d1Str.indexOf('(') > -1 ? d1Str.substring(d1Str.indexOf('(')) : 'Free space';
+                applyBarColor(document.getElementById('disk1-bar'), d1Pct);
+
+                // Disk 2
+                var d2Str = data.disk2 || '';
+                var d2Pct = parseInt(d2Str) || 0;
+                document.getElementById('disk2-val').innerHTML = d2Pct + '%';
+                document.getElementById('disk2-sub').innerHTML = d2Str.indexOf('(') > -1 ? d2Str.substring(d2Str.indexOf('(')) : 'Free space';
+                applyBarColor(document.getElementById('disk2-bar'), d2Pct);
+
+                // Homelab Telemetry: AdBlock Protection
+                if (data.dns) {
+                    var blk = data.dns.combined_blocked || '0';
+                    var pct = data.dns.block_percent || '0%';
+                    var adblockEl = document.getElementById('telemetry-adblock');
+                    var adblockSubEl = document.getElementById('telemetry-adblock-sub');
+                    if (adblockEl) adblockEl.innerHTML = blk;
+                    if (adblockSubEl) adblockSubEl.innerHTML = pct + ' blocked (24h)';
+                }
+            });
+        }
+
+        // Helper to shorten service names for Kiosk Lite
+        function getShortServiceName(s) {
+            if (!s) return 'Service';
+            var id = (s.id || '').toLowerCase();
+            if (id === 'jellyfin') return 'Jellyfin';
+            if (id === 'pihole') return 'Pi-hole';
+            if (id === 'vaultwarden') return 'Vaultwarden';
+            if (id === 'stirling-pdf' || id === 'stirling') return 'Stirling PDF';
+            if (id === 'adguard') return 'AdGuard';
+            if (id === 'immich') return 'Immich';
+            if (id === 'opencode') return 'OpenCode';
+            if (id === 'dockge') return 'Dockge';
+            if (id === 'portainer') return 'Portainer';
+
+            var name = s.name || s.id || 'Service';
+            name = name.replace(/\s+(Media Server|DNS Sinkhole|Password Vault|Home Console|Photo & Video Backup|AI Web Studio|PDF Suite|Suite|Manager|Server|Console|Service|Stack)$/i, '');
+            return name;
+        }
+
+        // 7. Load Homelab Services & Telemetry
+        function loadServices() {
+            ajax('/api/homelab/services', 'GET', null, function(err, data) {
+                if (err || !data || !data.length) return;
+                var onlineCount = 0;
+                var jellyfinOnline = false;
+                var jellyfinPort = '8096';
+
+                var html = '';
+                for (var i = 0; i < data.length; i++) {
+                    var s = data[i];
+                    var shortName = getShortServiceName(s);
+                    var isOnline = (s.status === 'Online');
+                    if (isOnline) onlineCount++;
+
+                    var sId = (s.id || '').toLowerCase();
+                    var sName = (s.name || '').toLowerCase();
+                    if (sId === 'jellyfin' || sName.indexOf('jellyfin') > -1) {
+                        if (isOnline) jellyfinOnline = true;
+                        if (s.port) jellyfinPort = s.port;
+                    }
+
+                    var badgeClass = isOnline ? 'badge-online' : 'badge-offline';
+                    var statusText = isOnline ? 'ONLINE' : 'OFFLINE';
+                    var portText = s.port ? (':' + s.port) : 'system';
+
+                    html += '<div class="col-4">';
+                    html += '  <div class="service-card">';
+                    html += '    <div class="service-card-top clearfix">';
+                    if (s.url) {
+                        html += '      <a href="' + s.url + '" target="_blank" class="service-card-name" title="' + (s.name || shortName) + '">' + shortName + '</a>';
+                    } else {
+                        html += '      <div class="service-card-name" title="' + (s.name || shortName) + '">' + shortName + '</div>';
+                    }
+                    html += '      <div class="service-card-status"><span class="badge ' + badgeClass + '">' + statusText + '</span></div>';
+                    html += '    </div>';
+                    html += '    <div class="service-card-bottom clearfix">';
+                    html += '      <div class="service-card-port">' + portText + '</div>';
+                    html += '      <div class="service-card-action">';
+                    html += '        <button class="btn-mini" onclick="restartService(\'' + s.id + '\')">Restart</button>';
+                    html += '      </div>';
+                    html += '    </div>';
+                    html += '  </div>';
+                    html += '</div>';
+                }
+                document.getElementById('services-container').innerHTML = html;
+
+                // Homelab Telemetry: Docker Containers Health
+                var dockerEl = document.getElementById('telemetry-docker');
+                var dockerSubEl = document.getElementById('telemetry-docker-sub');
+                if (dockerEl) {
+                    dockerEl.innerHTML = onlineCount + ' / ' + data.length;
+                    dockerEl.style.color = (onlineCount === data.length) ? '#10b981' : '#f59e0b';
+                }
+                if (dockerSubEl) {
+                    dockerSubEl.innerHTML = (onlineCount === data.length) ? 'All containers UP' : ((data.length - onlineCount) + ' stopped');
+                }
+
+                // Homelab Telemetry: Jellyfin Media Server
+                var jellyfinEl = document.getElementById('telemetry-jellyfin');
+                var jellyfinSubEl = document.getElementById('telemetry-jellyfin-sub');
+                if (jellyfinEl) {
+                    if (jellyfinOnline) {
+                        jellyfinEl.innerHTML = 'ONLINE';
+                        jellyfinEl.style.color = '#10b981';
+                    } else {
+                        jellyfinEl.innerHTML = 'OFFLINE';
+                        jellyfinEl.style.color = '#ef4444';
+                    }
+                }
+                if (jellyfinSubEl) {
+                    jellyfinSubEl.innerHTML = jellyfinOnline ? ('Port ' + jellyfinPort + ' active') : 'Service stopped';
+                }
+            });
+        }
+
+        // 8. Load Automation Scripts
+        function loadScripts() {
+            ajax('/api/scripts', 'GET', null, function(err, data) {
+                if (err || !data) return;
+                allScripts = data;
+                renderScripts();
+            });
+        }
+
+        function setTab(tab) {
+            activeTab = tab;
+            var tabs = ['all', 'Maintenance', 'Custom Scripts'];
+            var ids = ['tab-all', 'tab-maintenance', 'tab-custom'];
+            for (var i = 0; i < tabs.length; i++) {
+                var btn = document.getElementById(ids[i]);
+                if (btn) {
+                    if (tabs[i] === tab) {
+                        btn.className = 'tab-btn active';
+                    } else {
+                        btn.className = 'tab-btn';
+                    }
+                }
+            }
+            renderScripts();
+        }
+
+        function renderScripts() {
+            if (!allScripts || !allScripts.length) {
+                document.getElementById('scripts-container').innerHTML = '<div class="col-1"><div class="card">No scripts found.</div></div>';
+                return;
+            }
+
+            var html = '';
+            for (var i = 0; i < allScripts.length; i++) {
+                var sc = allScripts[i];
+                var cat = sc.category || 'Other';
+
+                if (activeTab !== 'all') {
+                    if (cat !== activeTab) {
+                        continue;
+                    }
+                }
+
+                var isRunning = sc.is_running;
+                var btnText = isRunning ? 'Running...' : 'RUN';
+                var btnClass = isRunning ? 'btn-orange' : 'btn-green';
+
+                html += '<div class="col-3">';
+                html += '  <div class="script-tile">';
+                html += '    <div class="script-title">' + sc.name + '</div>';
+                html += '    <div class="script-cat">' + cat + '</div>';
+                html += '    <button class="action-btn ' + btnClass + '" onclick="triggerScript(\'' + sc.id + '\')">' + btnText + '</button>';
+                html += '  </div>';
+                html += '</div>';
+            }
+
+            if (!html) {
+                html = '<div class="col-1"><div class="card">No scripts in this category.</div></div>';
+            }
+            document.getElementById('scripts-container').innerHTML = html;
+        }
+
+        // Actions
+        function triggerScript(id) {
+            var name = id;
+            for (var i = 0; i < allScripts.length; i++) {
+                if (allScripts[i].id === id) {
+                    name = allScripts[i].name || id;
+                    break;
+                }
+            }
+            showConfirm('Run Automation Script', 'Run ' + name + ' now?', 'RUN NOW', 'btn-green', function() {
+                showBanner('Triggering ' + name + '...', false);
+                ajax('/api/run/' + id, 'POST', {}, function(err, res) {
+                    if (err) {
+                        showBanner('Failed: ' + (err.error || 'Execution failed'), true);
+                    } else {
+                        showBanner(res.message || 'Started ' + name + '!', false);
+                        setTimeout(loadScripts, 1500);
+                    }
+                });
+            });
+        }
+
+        function runMaintenanceBatch() {
+            showConfirm('Run Maintenance Batch', 'Run all maintenance tasks sequentially?', 'RUN ALL', 'btn-purple', function() {
+                showBanner('Starting sequential maintenance tasks on server...', false);
+                ajax('/api/scripts/batch', 'POST', { category: 'Maintenance' }, function(err, res) {
+                    if (err) {
+                        showBanner('Batch failed: ' + (err.error || 'Server error'), true);
+                    } else {
+                        showBanner(res.message || 'Sequential batch running in background!', false);
+                        setTimeout(loadScripts, 2500);
+                    }
+                });
+            });
+        }
+
+        function restartService(serviceId) {
+            showConfirm('Restart Service', 'Restart service ' + serviceId + '?', 'RESTART', 'btn-orange', function() {
+                showBanner('Restarting ' + serviceId + '...', false);
+                ajax('/api/system/service/action', 'POST', { service: serviceId, action: 'restart' }, function(err, res) {
+                    if (err) {
+                        showBanner('Restart failed: ' + (err.error || 'Check service status'), true);
+                    } else {
+                        showBanner('Restart command sent to ' + serviceId + '!', false);
+                        setTimeout(loadServices, 2500);
+                    }
+                });
+            });
+        }
+
+        function rebootServer() {
+            showConfirm('Server Reboot', 'Are you sure you want to REBOOT the entire server?', 'REBOOT NOW', 'btn-red', function() {
+                showBanner('Rebooting server...', false);
+                ajax('/api/system/reboot', 'POST', {}, function(err, res) {
+                    if (err) {
+                        showBanner('Reboot request failed', true);
+                    } else {
+                        showBanner('Server is rebooting now. Dashboard will reconnect shortly.', false);
+                    }
+                });
+            });
+        }
+
+        function refreshAll() {
+            loadStats();
+            loadServices();
+            loadScripts();
+            loadWeather();
+            loadPrayerTimes();
+            showBanner('Refreshing data...', false);
+        }
+
+        // Initial Load
+        loadStats();
+        loadServices();
+        loadScripts();
+
+        // Polling (friendly to Android 4.0 CPU / battery - Idle Freeze halts Wi-Fi/CPU while dimmed)
+        setInterval(function() {
+            if (document.hidden || isScreenDimmed()) return;
+            loadStats();
+        }, 6000);
+
+        setInterval(function() {
+            if (document.hidden || isScreenDimmed()) return;
+            loadServices();
+        }, 12000);
+
+        setInterval(function() {
+            if (document.hidden || isScreenDimmed()) return;
+            loadScripts();
+        }, 15000);
+
+        // Heartbeat Ping to Server (every 25s when awake, 60s when dimmed)
+        var lastPingTime = 0;
+        setInterval(function() {
+            if (document.hidden) return;
+            var now = new Date().getTime();
+            var minGap = isScreenDimmed() ? 60000 : 25000;
+            if (now - lastPingTime < minGap) return;
+            lastPingTime = now;
+            ajax('/api/kiosk/ping', 'POST', null, function(err, data) {
+                if (data && data.reload_token) {
+                    checkRemoteReload(data.reload_token);
+                }
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
