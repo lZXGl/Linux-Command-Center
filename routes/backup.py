@@ -12,7 +12,7 @@ def trigger_backup_route():
     success, result = create_full_backup()
     if success:
         return jsonify({
-            "message": f"Backup archive '{result['filename']}' ({result['size']}) created successfully in fast storage!",
+            "message": f"Backup archive '{result['filename']}' ({result['size']}) created successfully in backup storage!",
             "backup": result
         })
     return jsonify({"error": f"Backup failed: {result}"}), 500
