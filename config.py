@@ -81,17 +81,6 @@ CORE_SCRIPTS_CONFIG = {
         "icon": "fa-box-archive",
         "desc": "Automated snapshot backup of application configs and databases.",
         "cron_pattern": r'(backup_task\.py|cron_runner\.py\s+backup_daily)'
-    },
-    "auto_gui": {
-        "id": "auto_gui",
-        "name": "Auto GUI Manager",
-        "script": "auto_gui_manager.py",
-        "dir": BASE_DIR,
-        "python": "python3",
-        "category": "Maintenance",
-        "icon": "fa-desktop",
-        "desc": "Switch headless / GUI mode based on monitor hotplug.",
-        "cron_pattern": r'(auto_gui_manager\.py|cron_runner\.py\s+auto_gui)'
     }
 }
 
