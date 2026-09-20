@@ -466,7 +466,7 @@ if __name__ == "__main__":
 
     async function openRevertBackupModal() {
         document.getElementById('modal-title').innerText = 'Revert to Backup Archive Snapshot';
-        document.getElementById('modal-body').innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-secondary);">Scanning available backups in fast storage...</div>`;
+        document.getElementById('modal-body').innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-secondary);">Scanning available backups...</div>`;
         document.getElementById('viewer-modal').classList.add('active');
 
         try {
@@ -4103,9 +4103,20 @@ ${data.analysis || 'Analysis could not be generated.'}
             const data = await res.json();
             const files = Array.isArray(data) ? data : (data.files || []);
             if (files.length === 0) {
-                container.innerHTML = `<div style="color:var(--text-secondary); padding:1rem;">No large files detected in fast storage.</div>`;
+                container.innerHTML = `<div style="color:var(--text-secondary); padding:1rem;">No large files detected (>100MB).</div>`;
                 return;
             }
+
+            const getCategoryIcon = (cat) => {
+                if (!cat) return 'fa-file';
+                const lower = cat.toLowerCase();
+                if (lower.includes('video') || lower.includes('media')) return 'fa-file-video';
+                if (lower.includes('backup') || lower.includes('archive')) return 'fa-box-archive';
+                if (lower.includes('disk') || lower.includes('image')) return 'fa-compact-disc';
+                if (lower.includes('photo') || lower.includes('graphic')) return 'fa-file-image';
+                return 'fa-file';
+            };
+
             container.innerHTML = `
                 <div class="table-responsive">
                     <table class="history-table" style="font-size: 0.82rem; width: 100%;">
@@ -4119,12 +4130,14 @@ ${data.analysis || 'Analysis could not be generated.'}
                             </tr>
                         </thead>
                         <tbody>
-                            ${files.map((f, i) => `
+                            ${files.map((f, i) => {
+                                const iconClass = getCategoryIcon(f.category);
+                                return `
                                 <tr>
                                     <td style="color: var(--text-secondary); font-weight: 700;">#${i + 1}</td>
                                     <td>
                                         <div style="font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.45rem;">
-                                            <i class="fa-regular fa-file-video" style="color: var(--accent-cyan); font-size: 0.85rem;"></i>
+                                            <i class="fa-solid ${iconClass}" style="color: var(--accent-cyan); font-size: 0.85rem;"></i>
                                             <span title="${escapeHtml(f.path || '')}">${escapeHtml(f.name || '')}</span>
                                         </div>
                                         <div style="font-size: 0.7rem; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; margin-top: 0.15rem; max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(f.path || '')}">
@@ -4133,7 +4146,7 @@ ${data.analysis || 'Analysis could not be generated.'}
                                     </td>
                                     <td>
                                         <span class="count-pill" style="font-size: 0.74rem;">
-                                            <i class="fa-solid fa-film" style="margin-right: 0.25rem;"></i>${escapeHtml(f.category || 'Media')}
+                                            <i class="fa-solid ${iconClass}" style="margin-right: 0.25rem;"></i>${escapeHtml(f.category || 'File')}
                                         </span>
                                     </td>
                                     <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #00f2fe; white-space: nowrap;">
@@ -4143,7 +4156,7 @@ ${data.analysis || 'Analysis could not be generated.'}
                                         ${escapeHtml(f.modified || 'Recent')}
                                     </td>
                                 </tr>
-                            `).join('')}
+                            `;}).join('')}
                         </tbody>
                     </table>
                 </div>
