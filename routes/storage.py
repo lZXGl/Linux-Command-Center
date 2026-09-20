@@ -20,7 +20,7 @@ def get_storage_overview():
                 parts = lines[1].split()
                 volumes.append({
                     "mount": STORAGE_BASE,
-                    "label": "Secondary / Fast Storage",
+                    "label": "Secondary Storage Volume",
                     "total": parts[1],
                     "used": parts[2],
                     "free": parts[3],

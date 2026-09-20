@@ -8,7 +8,7 @@ APP_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.environ.get("SCRIPTS_DIR", os.path.join(APP_DIR, "scripts"))
 SCREENSHOTS_DIR = os.environ.get("SCREENSHOTS_DIR", os.path.join(APP_DIR, "screenshots"))
 BACKUPS_DIR = os.environ.get("BACKUPS_DIR", os.path.join(APP_DIR, "backups"))
-STORAGE_BASE = os.environ.get("STORAGE_BASE", "/mnt/storage" if os.path.exists("/mnt/storage") else ("/mnt/fast_storage" if os.path.exists("/mnt/fast_storage") else os.path.expanduser("~")))
+STORAGE_BASE = os.environ.get("STORAGE_BASE", "/mnt/storage" if os.path.exists("/mnt/storage") else os.path.expanduser("~"))
 
 # Ensure directories exist
 for d in [BASE_DIR, SCREENSHOTS_DIR, BACKUPS_DIR]:

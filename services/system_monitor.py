@@ -153,34 +153,42 @@ def get_dns_stats():
     }
 
 def get_disk_usage_stats():
+    res = {
+        "disk1": "0.0%",
+        "disk1_percent": "0.0%",
+        "disk2": None,
+        "disk2_percent": None,
+        "disk2_name": None
+    }
     try:
         stat1 = os.statvfs('/')
         total1 = stat1.f_blocks * stat1.f_frsize
         free1 = stat1.f_bavail * stat1.f_frsize
         used1 = total1 - free1
-        percent1 = round((used1 / total1) * 100, 1)
+        percent1 = round((used1 / total1) * 100, 1) if total1 else 0
         free_gb1 = round(free1 / (1024 ** 3), 1)
-
-        stat2 = os.statvfs('/mnt/fast_storage')
-        total2 = stat2.f_blocks * stat2.f_frsize
-        free2 = stat2.f_bavail * stat2.f_frsize
-        used2 = total2 - free2
-        percent2 = round((used2 / total2) * 100, 1)
-        free_gb2 = round(free2 / (1024 ** 3), 1)
-
-        return {
-            "disk1": f"{percent1}% ({free_gb1} GB Free)",
-            "disk2": f"{percent2}% ({free_gb2} GB Free)",
-            "disk1_percent": f"{percent1}% ({free_gb1} GB Free)",
-            "disk2_percent": f"{percent2}% ({free_gb2} GB Free)"
-        }
+        res["disk1"] = f"{percent1}% ({free_gb1} GB Free)"
+        res["disk1_percent"] = f"{percent1}% ({free_gb1} GB Free)"
     except Exception:
-        return {
-            "disk1": "0.0%",
-            "disk2": "0.0%",
-            "disk1_percent": "0.0%",
-            "disk2_percent": "0.0%"
-        }
+        pass
+
+    # Optional secondary storage mount (only if configured via env)
+    sec_path = os.environ.get("SECONDARY_STORAGE_PATH")
+    if sec_path and os.path.exists(sec_path):
+        try:
+            stat2 = os.statvfs(sec_path)
+            total2 = stat2.f_blocks * stat2.f_frsize
+            free2 = stat2.f_bavail * stat2.f_frsize
+            used2 = total2 - free2
+            percent2 = round((used2 / total2) * 100, 1) if total2 else 0
+            free_gb2 = round(free2 / (1024 ** 3), 1)
+            res["disk2"] = f"{percent2}% ({free_gb2} GB Free)"
+            res["disk2_percent"] = f"{percent2}% ({free_gb2} GB Free)"
+            res["disk2_name"] = os.path.basename(sec_path.rstrip("/")) or "Storage"
+        except Exception:
+            pass
+
+    return res
 
 last_cpu_time = 0
 last_cpu_idle = 0
@@ -304,6 +312,7 @@ def get_system_stats():
         "gpu": gpu,
         "disk1_percent": disks["disk1_percent"],
         "disk2_percent": disks["disk2_percent"],
+        "disk2_name": disks.get("disk2_name"),
         "disk1": disks["disk1"],
         "disk2": disks["disk2"],
         "net_rx": speed["rx_rate"],

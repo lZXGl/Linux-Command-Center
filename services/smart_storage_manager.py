@@ -94,9 +94,12 @@ def record_disk_snapshot():
     fast_used_gb = 0
     fast_total_gb = 0
     fast_percent = 0
-    if os.path.exists("/mnt/fast_storage"):
+    sec_storage = os.environ.get("SECONDARY_STORAGE_PATH")
+    if not sec_storage and os.environ.get("STORAGE_BASE") and os.environ.get("STORAGE_BASE") != "/":
+        sec_storage = os.environ.get("STORAGE_BASE")
+    if sec_storage and os.path.exists(sec_storage):
         try:
-            fast_stat = shutil.disk_usage("/mnt/fast_storage")
+            fast_stat = shutil.disk_usage(sec_storage)
             fast_used_gb = round((fast_stat.total - fast_stat.free) / (1024 ** 3), 2)
             fast_total_gb = round(fast_stat.total / (1024 ** 3), 2)
             fast_percent = round((fast_used_gb / fast_total_gb) * 100, 1)
@@ -170,19 +173,23 @@ def calculate_storage_forecast():
     date_90 = (datetime.now() + timedelta(days=days_until_90)).strftime("%b %d, %Y")
     date_100 = (datetime.now() + timedelta(days=days_until_100)).strftime("%b %d, %Y")
 
-    # Fast storage metrics if mounted
-    fast_storage_info = None
-    if os.path.exists("/mnt/fast_storage"):
+    # Secondary storage metrics if mounted
+    secondary_storage_info = None
+    sec_storage = os.environ.get("SECONDARY_STORAGE_PATH")
+    if not sec_storage and os.environ.get("STORAGE_BASE") and os.environ.get("STORAGE_BASE") != "/":
+        sec_storage = os.environ.get("STORAGE_BASE")
+    if sec_storage and os.path.exists(sec_storage):
         try:
-            fast_stat = shutil.disk_usage("/mnt/fast_storage")
+            fast_stat = shutil.disk_usage(sec_storage)
             fast_total = round(fast_stat.total / (1024 ** 3), 2)
             fast_free = round(fast_stat.free / (1024 ** 3), 2)
             fast_used = round((fast_stat.total - fast_stat.free) / (1024 ** 3), 2)
-            fast_storage_info = {
+            secondary_storage_info = {
+                "name": os.path.basename(sec_storage.rstrip("/")) or "Storage",
                 "total_gb": fast_total,
                 "free_gb": fast_free,
                 "used_gb": fast_used,
-                "percent": round((fast_used / fast_total) * 100, 1),
+                "percent": round((fast_used / fast_total) * 100, 1) if fast_total else 0,
                 "status": "Healthy & Online"
             }
         except Exception:
@@ -201,7 +208,8 @@ def calculate_storage_forecast():
             "date_until_100": date_100,
             "burn_rate": "Low / Sustainable" if daily_growth_gb < 1.0 else "Elevated Growth"
         },
-        "fast_storage": fast_storage_info,
+        "fast_storage": secondary_storage_info,
+        "secondary_storage": secondary_storage_info,
         "history": history[-15:],
         "drives": get_block_devices_info()
     }
