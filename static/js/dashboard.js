@@ -101,36 +101,268 @@
         }
     }
 
+    let scriptAddTab = 'existing';
+
+    window.switchScriptAddTab = function(tab) {
+        scriptAddTab = tab;
+        const btnExisting = document.getElementById('tab-existing-script');
+        const btnNew = document.getElementById('tab-new-script');
+        const secExisting = document.getElementById('sec-existing-script');
+        const secNew = document.getElementById('sec-new-script');
+
+        if (tab === 'existing') {
+            if (btnExisting) {
+                btnExisting.className = 'btn btn-primary btn-sm';
+                btnExisting.style.fontWeight = '700';
+            }
+            if (btnNew) {
+                btnNew.className = 'btn btn-secondary btn-sm';
+                btnNew.style.fontWeight = 'normal';
+            }
+            if (secExisting) secExisting.style.display = 'block';
+            if (secNew) secNew.style.display = 'none';
+        } else {
+            if (btnNew) {
+                btnNew.className = 'btn btn-primary btn-sm';
+                btnNew.style.fontWeight = '700';
+            }
+            if (btnExisting) {
+                btnExisting.className = 'btn btn-secondary btn-sm';
+                btnExisting.style.fontWeight = 'normal';
+            }
+            if (secExisting) secExisting.style.display = 'none';
+            if (secNew) secNew.style.display = 'block';
+        }
+    };
+
+    window.selectDiscoveredScript = function(path, name, type) {
+        const pathInput = document.getElementById('existing-script-path');
+        const nameInput = document.getElementById('existing-script-name');
+        const interpSelect = document.getElementById('existing-script-interp');
+        if (pathInput) pathInput.value = path;
+        if (nameInput && (!nameInput.value || nameInput.value.trim() === '')) {
+            const clean = name.replace(/\.(sh|py|bash)$/i, '').replace(/[-_]/g, ' ').trim();
+            if (clean) nameInput.value = clean.charAt(0).toUpperCase() + clean.slice(1);
+        }
+        if (interpSelect && type) {
+            interpSelect.value = type;
+        }
+    };
+
+    window.onExistingPathChange = function(val) {
+        const nameInput = document.getElementById('existing-script-name');
+        const interpSelect = document.getElementById('existing-script-interp');
+        if (!val) return;
+        const parts = val.split(/[/\\]/);
+        const fname = parts[parts.length - 1];
+        if (nameInput && !nameInput.value) {
+            const clean = fname.replace(/\.(sh|py|bash)$/i, '').replace(/[-_]/g, ' ').trim();
+            if (clean) nameInput.value = clean.charAt(0).toUpperCase() + clean.slice(1);
+        }
+        if (interpSelect) {
+            if (fname.endsWith('.sh') || fname.endsWith('.bash')) interpSelect.value = 'bash';
+            else if (fname.endsWith('.py')) interpSelect.value = 'python3';
+            else interpSelect.value = 'executable';
+        }
+    };
+
+    window.switchNewScriptTemplate = function(tpl) {
+        const codeArea = document.getElementById('new-script-code');
+        if (!codeArea) return;
+        if (tpl === 'bash') {
+            codeArea.value = `#!/usr/bin/env bash
+# Custom Bash Automation
+set -e
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting automation task..."
+sleep 1
+echo "Completed successfully."
+`;
+        } else {
+            codeArea.value = `#!/usr/bin/env python3
+# Custom Python Automation
+import time
+from datetime import datetime
+
+def main():
+    print(f"[{datetime.now()}] Starting automation...")
+    time.sleep(1)
+    print("Script completed successfully.")
+
+if __name__ == "__main__":
+    main()
+`;
+        }
+    };
+
+    async function loadDiscoveredScriptsList() {
+        const chipsContainer = document.getElementById('discovered-scripts-chips');
+        const spinner = document.getElementById('discovered-spinner');
+        if (!chipsContainer) return;
+
+        try {
+            const res = await fetch('/api/scripts/discover');
+            const data = await res.json();
+            const scripts = data.scripts || [];
+            if (spinner) spinner.textContent = `${scripts.length} found`;
+
+            if (scripts.length === 0) {
+                chipsContainer.innerHTML = `<span style="font-size:0.76rem; color:var(--text-secondary);">No .sh or .py scripts found in standard paths. You can type any system path above.</span>`;
+                return;
+            }
+
+            chipsContainer.innerHTML = scripts.map(s => {
+                const icon = s.type === 'bash' ? 'fa-terminal' : (s.type === 'python3' ? 'fa-brands fa-python' : 'fa-gear');
+                const badgeColor = s.type === 'bash' ? '#38bdf8' : (s.type === 'python3' ? '#fbbf24' : '#a855f7');
+                const safePath = escapeHtml(s.path);
+                const safeName = escapeHtml(s.name);
+                return `
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="selectDiscoveredScript('${safePath.replace(/'/g, "\\'")}', '${safeName.replace(/'/g, "\\'")}', '${s.type}')" 
+                        style="font-size:0.75rem; padding:0.25rem 0.6rem; display:inline-flex; align-items:center; gap:0.35rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:6px;" 
+                        title="${safePath} (${s.size})">
+                        <i class="${icon}" style="color:${badgeColor}; font-size:0.75rem;"></i>
+                        <span style="font-weight:600;">${safeName}</span>
+                        <span style="color:var(--text-secondary); font-size:0.68rem;">(${s.size})</span>
+                    </button>
+                `;
+            }).join('');
+        } catch (e) {
+            if (spinner) spinner.textContent = 'Ready';
+            chipsContainer.innerHTML = `<span style="font-size:0.76rem; color:var(--text-secondary);">Type any script path above.</span>`;
+        }
+    }
+
     function openAddScriptModal() {
-        document.getElementById('modal-title').innerText = 'Add Custom Automation Script';
+        document.getElementById('modal-title').innerText = 'Add Automation Script';
         document.getElementById('modal-body').innerHTML = `
             <div style="display:flex; flex-direction:column; gap:1.15rem;">
-                <p style="font-size:0.85rem; color:var(--text-secondary);">Register a new Python automation script. The file is created and placed in your dashboard ready to run and schedule.</p>
-                <div class="form-group">
-                    <label>Script Name:</label>
-                    <input type="text" id="new-script-name" class="form-control" placeholder="e.g. Database Backup Runner">
+                <!-- Tab switcher -->
+                <div style="display:flex; gap:0.5rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.75rem;">
+                    <button id="tab-existing-script" class="btn btn-primary btn-sm" onclick="switchScriptAddTab('existing')" style="font-weight:700; font-size:0.82rem; padding:0.4rem 0.85rem;">
+                        <i class="fa-solid fa-folder-open"></i> Link Existing Script on System
+                    </button>
+                    <button id="tab-new-script" class="btn btn-secondary btn-sm" onclick="switchScriptAddTab('new')" style="font-size:0.82rem; padding:0.4rem 0.85rem;">
+                        <i class="fa-solid fa-code"></i> Write New Code
+                    </button>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Category:</label>
-                        <select id="new-script-category" class="form-control">
-                            <option value="Maintenance">Maintenance</option>
-                            <option value="Backups">Backups</option>
-                            <option value="Custom Scripts" selected>Custom Scripts</option>
-                        </select>
+
+                <!-- SECTION 1: LINK EXISTING SCRIPT (DEFAULT) -->
+                <div id="sec-existing-script">
+                    <p style="font-size:0.84rem; color:var(--text-secondary); margin-bottom:1rem; line-height:1.45;">
+                        Link any existing script (Bash <code>.sh</code>, Python <code>.py</code>, or binary) already located on your Linux system. The Command Center will run it, monitor its execution logs, and allow cron scheduling.
+                    </p>
+
+                    <div class="form-group" style="margin-bottom:0.85rem;">
+                        <label style="display:flex; justify-content:space-between; align-items:center;">
+                            <span><i class="fa-solid fa-file-code" style="color:var(--accent-cyan);"></i> File Path on System:</span>
+                            <span style="font-size:0.75rem; color:var(--text-secondary);">Absolute or ~/path</span>
+                        </label>
+                        <input type="text" id="existing-script-path" class="form-control" placeholder="/home/user/myscript.sh or ~/scripts/backup.py" oninput="onExistingPathChange(this.value)">
                     </div>
+
+                    <!-- Auto-discovered scripts list -->
+                    <div style="margin-bottom:1rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:0.65rem 0.85rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.45rem;">
+                            <span style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">
+                                <i class="fa-solid fa-wand-magic-sparkles" style="color:#00f2fe;"></i> Discovered Scripts on Host
+                            </span>
+                            <span id="discovered-spinner" style="font-size:0.75rem; color:var(--text-secondary);"><i class="fa-solid fa-spinner fa-spin"></i> Scanning...</span>
+                        </div>
+                        <div id="discovered-scripts-chips" style="display:flex; flex-wrap:wrap; gap:0.4rem; max-height:110px; overflow-y:auto;">
+                            <!-- Populated dynamically via /api/scripts/discover -->
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Display Name:</label>
+                            <input type="text" id="existing-script-name" class="form-control" placeholder="e.g. Daily DB Backup">
+                        </div>
+                        <div class="form-group">
+                            <label>Category:</label>
+                            <select id="existing-script-category" class="form-control">
+                                <option value="Custom Scripts" selected>Custom Scripts</option>
+                                <option value="Maintenance">Maintenance</option>
+                                <option value="Backups">Backups</option>
+                                <option value="Homelab">Homelab</option>
+                                <option value="System">System</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Interpreter / Runner:</label>
+                            <select id="existing-script-interp" class="form-control">
+                                <option value="auto" selected>Auto-detect (from extension / shebang)</option>
+                                <option value="bash">Bash (/bin/bash)</option>
+                                <option value="python3">Python 3 (python3)</option>
+                                <option value="executable">Direct Executable Binary (+x)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Crontab Schedule (Optional):</label>
+                            <input type="text" id="existing-script-cron" class="form-control" placeholder="e.g. 0 3 * * *">
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label>Crontab Schedule (Optional):</label>
-                        <input type="text" id="new-script-cron" class="form-control" placeholder="e.g. 0 3 * * *">
+                        <label>Description (Optional):</label>
+                        <input type="text" id="existing-script-desc" class="form-control" placeholder="What does this script do?">
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1rem;">
+                        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button class="btn btn-primary" onclick="submitRegisterExistingScript()">
+                            <i class="fa-solid fa-link"></i> Link & Add Script
+                        </button>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Description:</label>
-                    <input type="text" id="new-script-desc" class="form-control" placeholder="Brief description of script...">
-                </div>
-                <div class="form-group">
-                    <label>Python Code:</label>
-                    <textarea id="new-script-code" class="form-control" style="height:170px; font-family:'JetBrains Mono', monospace; font-size:0.85rem; line-height:1.45;">#!/usr/bin/env python3
+
+                <!-- SECTION 2: WRITE NEW CODE -->
+                <div id="sec-new-script" style="display:none;">
+                    <p style="font-size:0.84rem; color:var(--text-secondary); margin-bottom:1rem; line-height:1.45;">
+                        Write and create a new script file directly on your server.
+                    </p>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Script Name:</label>
+                            <input type="text" id="new-script-name" class="form-control" placeholder="e.g. Memory Watcher">
+                        </div>
+                        <div class="form-group">
+                            <label>Script Type:</label>
+                            <select id="new-script-type" class="form-control" onchange="switchNewScriptTemplate(this.value)">
+                                <option value="python" selected>Python 3 (.py)</option>
+                                <option value="bash">Bash Shell (.sh)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Category:</label>
+                            <select id="new-script-category" class="form-control">
+                                <option value="Custom Scripts" selected>Custom Scripts</option>
+                                <option value="Maintenance">Maintenance</option>
+                                <option value="Backups">Backups</option>
+                                <option value="Homelab">Homelab</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Crontab Schedule (Optional):</label>
+                            <input type="text" id="new-script-cron" class="form-control" placeholder="e.g. 0 3 * * *">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description:</label>
+                        <input type="text" id="new-script-desc" class="form-control" placeholder="Brief description of script...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Script Code:</label>
+                        <textarea id="new-script-code" class="form-control" style="height:160px; font-family:'JetBrains Mono', monospace; font-size:0.83rem; line-height:1.45;">#!/usr/bin/env python3
 import time
 from datetime import datetime
 
@@ -142,18 +374,62 @@ def main():
 if __name__ == "__main__":
     main()
 </textarea>
-                </div>
-                <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:0.5rem;">
-                    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                    <button class="btn btn-primary" onclick="submitCreateScript()"><i class="fa-solid fa-plus"></i> Save & Register Script</button>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:0.75rem;">
+                        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button class="btn btn-primary" onclick="submitCreateScript()"><i class="fa-solid fa-plus"></i> Save & Register Script</button>
+                    </div>
                 </div>
             </div>
         `;
         document.getElementById('viewer-modal').classList.add('active');
+        loadDiscoveredScriptsList();
+    }
+
+    async function submitRegisterExistingScript() {
+        const path = document.getElementById('existing-script-path').value.trim();
+        const name = document.getElementById('existing-script-name').value.trim();
+        const category = document.getElementById('existing-script-category').value.trim();
+        const interp = document.getElementById('existing-script-interp').value.trim();
+        const schedule = document.getElementById('existing-script-cron').value.trim();
+        const desc = document.getElementById('existing-script-desc').value.trim();
+
+        if (!path) {
+            showToast('Please specify the script file path on your system', 'error');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/scripts/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mode: 'existing',
+                    path: path,
+                    name: name,
+                    category: category,
+                    interpreter: interp,
+                    schedule: schedule,
+                    desc: desc
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast(data.message || 'Script linked successfully!', 'success');
+                closeModal();
+                loadScripts(true);
+            } else {
+                showToast(data.error || 'Failed to link script', 'error');
+            }
+        } catch (e) {
+            showToast('Error linking script', 'error');
+        }
     }
 
     async function submitCreateScript() {
         const name = document.getElementById('new-script-name').value.trim();
+        const type = document.getElementById('new-script-type') ? document.getElementById('new-script-type').value.trim() : 'python';
         const category = document.getElementById('new-script-category').value.trim();
         const desc = document.getElementById('new-script-desc').value.trim();
         const schedule = document.getElementById('new-script-cron').value.trim();
@@ -168,11 +444,11 @@ if __name__ == "__main__":
             const res = await fetch('/api/scripts/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, category, desc, schedule, code })
+                body: JSON.stringify({ mode: 'new', name, type, category, desc, schedule, code })
             });
             const data = await res.json();
             if (res.ok) {
-                showToast(data.message, 'success');
+                showToast(data.message || 'Script created successfully!', 'success');
                 closeModal();
                 loadScripts(true);
             } else {
@@ -181,6 +457,28 @@ if __name__ == "__main__":
         } catch(e) {
             showToast('Error creating script', 'error');
         }
+    }
+
+    function deleteCustomScript(id, name) {
+        showConfirm(
+            'Remove Custom Script',
+            `Are you sure you want to remove '${name}' from your dashboard? (If it was a linked script, your file on disk will NOT be deleted).`,
+            async () => {
+                try {
+                    const res = await fetch(`/api/scripts/${encodeURIComponent(id)}/delete`, { method: 'POST' });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast(data.message || 'Script removed successfully', 'success');
+                        loadScripts(true);
+                    } else {
+                        showToast(data.error || 'Failed to remove script', 'error');
+                    }
+                } catch(e) {
+                    showToast('Error removing script', 'error');
+                }
+            },
+            true
+        );
     }
 
     function openAddContainerModal() {
@@ -1634,8 +1932,11 @@ if __name__ == "__main__":
         }
     }
 
-        function renderScriptCardHTML(s) {
-        const searchKeywords = `${s.name} ${s.category} ${s.script} ${s.schedule_str} script python`.toLowerCase();
+    function renderScriptCardHTML(s) {
+        const searchKeywords = `${s.name} ${s.category} ${s.script} ${s.schedule_str} ${s.interpreter || ''} script`.toLowerCase();
+        const interpBadge = s.interpreter ? `<span class="count-pill" style="font-size:0.65rem; padding:0.1rem 0.35rem; text-transform:uppercase; font-weight:700; background:rgba(255,255,255,0.06);">${escapeHtml(s.interpreter)}</span>` : '';
+        const linkedBadge = s.is_existing ? `<span class="count-pill" style="font-size:0.65rem; padding:0.1rem 0.35rem; background:rgba(0,242,254,0.1); color:#00f2fe; border:1px solid rgba(0,242,254,0.25);"><i class="fa-solid fa-link" style="font-size:0.6rem;"></i> Linked</span>` : '';
+
         return `
             <div class="card" data-search="${searchKeywords}">
                 <div>
@@ -1645,8 +1946,12 @@ if __name__ == "__main__":
                                 <i class="fa-solid ${s.icon}"></i>
                             </div>
                             <div class="card-title-text">
-                                <h3>${s.name}</h3>
-                                <div class="card-category">${s.category} &bull; ${s.script}</div>
+                                <div style="display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;">
+                                    <h3 style="margin:0;">${escapeHtml(s.name)}</h3>
+                                    ${linkedBadge}
+                                    ${interpBadge}
+                                </div>
+                                <div class="card-category" title="${escapeHtml(s.path || s.script)}">${escapeHtml(s.category)} &bull; ${escapeHtml(s.script)}</div>
                             </div>
                         </div>
                         <label class="toggle-switch" title="Toggle Cron Schedule">
@@ -1685,6 +1990,11 @@ if __name__ == "__main__":
                     ${s.screenshot_url ? `
                     <button class="btn btn-secondary" onclick="viewScreenshot('${s.id}')">
                         <i class="fa-solid fa-image"></i> Screenshot
+                    </button>
+                    ` : ''}
+                    ${s.is_custom ? `
+                    <button class="btn btn-secondary" onclick="deleteCustomScript('${s.id}', '${escapeHtml(s.name).replace(/'/g, "\\'")}')" title="Remove Script from Dashboard" style="color:var(--accent-red); border-color:rgba(239,68,68,0.3); padding:0.4rem 0.65rem;">
+                        <i class="fa-solid fa-trash"></i>
                     </button>
                     ` : ''}
                 </div>

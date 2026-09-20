@@ -45,11 +45,36 @@ def get_scripts_map():
             with open(custom_file, 'r') as f:
                 custom = json.load(f)
             for sid, c in custom.items():
+                c_path = c.get("path") or (os.path.join(c.get("dir", SCRIPTS_DIR), c.get("script")) if not os.path.isabs(c.get("script", "")) else c.get("script"))
+                c_interp = (c.get("interpreter") or "").lower()
+                if not c_interp:
+                    if c_path.endswith(('.sh', '.bash')):
+                        c_interp = "bash"
+                    elif c_path.endswith('.py'):
+                        c_interp = "python3"
+                    elif os.access(c_path, os.X_OK):
+                        c_interp = "executable"
+                    else:
+                        c_interp = "python3"
+
+                if c_interp == "bash":
+                    cmd = ["/bin/bash", c_path]
+                elif c_interp == "sh":
+                    cmd = ["/bin/sh", c_path]
+                elif c_interp == "executable":
+                    cmd = [c_path]
+                else:
+                    cmd = [c.get("python", "python3"), c_path]
+
+                run_cwd = c.get("dir", SCRIPTS_DIR)
+                if not os.path.exists(run_cwd):
+                    run_cwd = os.path.dirname(c_path) if os.path.exists(os.path.dirname(c_path)) else str(APP_DIR)
+
                 scripts_map[sid] = {
                     "name": c.get("name", sid),
-                    "cmd": [c.get("python", "python3"), c.get("script")],
-                    "cwd": c.get("dir", SCRIPTS_DIR),
-                    "log": os.path.join(c.get("dir", SCRIPTS_DIR), f"logs/{sid}.log")
+                    "cmd": cmd,
+                    "cwd": run_cwd,
+                    "log": os.path.join(APP_DIR, f"logs/{sid}.log")
                 }
         except Exception:
             pass

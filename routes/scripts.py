@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import shlex
 import subprocess
 import glob
 import threading
@@ -47,15 +48,12 @@ def is_process_running(script_name):
                 continue
             if pid == current_pid:
                 continue
-            cmd = parts[1]
-            if any(ign in cmd for ign in ["grep", "pgrep", "app.py", "subprocess", "gunicorn", "vscode", "antigravity"]):
-                continue
-            script_id = script_name.replace(".py", "")
-            if script_name in cmd or f"cron_runner.py {script_id}" in cmd:
+            cmdline = parts[1]
+            if f"/{script_name}" in cmdline or f" {script_name}" in cmdline:
                 return True
-        return False
     except Exception:
-        return False
+        pass
+    return False
 
 @scripts_bp.route('/api/scripts', methods=['GET'])
 def get_scripts_list():
@@ -85,6 +83,9 @@ def get_scripts_list():
             "name": sinfo.get("name"),
             "category": sinfo.get("category"),
             "script": sinfo.get("script"),
+            "path": sinfo.get("path"),
+            "interpreter": sinfo.get("interpreter", "python3"),
+            "is_existing": sinfo.get("is_existing", False),
             "icon": sinfo.get("icon", "fa-code"),
             "desc": sinfo.get("desc", ""),
             "cron_enabled": cron_info["enabled"],
@@ -99,33 +100,187 @@ def get_scripts_list():
 
     return jsonify(result)
 
+@scripts_bp.route('/api/scripts/discover', methods=['GET'])
+def discover_local_scripts():
+    """Scans safe user and system locations for existing scripts (.sh, .py, .bash, executables)."""
+    search_dirs = [
+        os.path.expanduser("~/scripts"),
+        os.path.expanduser("~"),
+        BASE_DIR,
+        os.path.join(APP_DIR, "scripts"),
+        "/usr/local/bin"
+    ]
+    found = []
+    seen_paths = set()
+
+    for sdir in search_dirs:
+        if not os.path.exists(sdir) or not os.path.isdir(sdir):
+            continue
+        try:
+            for entry in os.scandir(sdir):
+                if entry.is_file(follow_symlinks=False):
+                    lower = entry.name.lower()
+                    if entry.name.startswith('.'):
+                        continue
+                    if lower.endswith(('.log', '.txt', '.json', '.html', '.css', '.js', '.md', '.png', '.jpg', '.tar.gz', '.zip', '.bak')):
+                        continue
+
+                    is_script_ext = lower.endswith(('.sh', '.py', '.bash'))
+                    is_exec = os.access(entry.path, os.X_OK)
+
+                    if (is_script_ext or is_exec) and entry.path not in seen_paths:
+                        seen_paths.add(entry.path)
+                        ext = os.path.splitext(entry.name)[1].lower()
+                        if ext in ['.sh', '.bash']:
+                            stype = "bash"
+                        elif ext == '.py':
+                            stype = "python3"
+                        else:
+                            stype = "executable"
+
+                        size_b = entry.stat().st_size
+                        size_str = f"{size_b / 1024:.1f} KB" if size_b > 1024 else f"{size_b} B"
+                        found.append({
+                            "name": entry.name,
+                            "path": entry.path,
+                            "type": stype,
+                            "size": size_str
+                        })
+        except Exception:
+            continue
+
+    return jsonify({"scripts": found[:40]})
+
 @scripts_bp.route('/api/scripts/create', methods=['POST'])
 def create_script():
     data = request.json or {}
+    mode = data.get("mode", "").strip().lower()  # "existing" or "new"
+    existing_path = (data.get("path") or data.get("existing_path") or "").strip()
     name = data.get("name", "").strip()
     category = data.get("category", "Custom Scripts").strip()
     desc = data.get("desc", "").strip()
     schedule = data.get("schedule", "").strip()
-    code = data.get("code", "").strip()
-    icon = data.get("icon", "fa-code")
+    interpreter = (data.get("interpreter") or "").strip().lower()
+    icon = data.get("icon", "")
 
+    # Mode 1: Link Existing Script on System
+    if mode == "existing" or existing_path:
+        if not existing_path:
+            return jsonify({"error": "Path to existing script is required"}), 400
+
+        clean_path = os.path.abspath(os.path.expanduser(existing_path))
+        if not os.path.exists(clean_path):
+            return jsonify({"error": f"Script file not found: {existing_path}"}), 400
+        if not os.path.isfile(clean_path):
+            return jsonify({"error": f"Target path is not a regular file: {existing_path}"}), 400
+
+        base_name = os.path.basename(clean_path)
+        if not name:
+            name_stem = os.path.splitext(base_name)[0].replace('_', ' ').replace('-', ' ').title()
+            name = f"{name_stem} Runner"
+
+        script_id = re.sub(r'[^a-zA-Z0-9_]', '_', name.lower()).strip('_')
+        if not script_id:
+            script_id = f"script_{int(time.time())}"
+
+        # Detect interpreter if not specified or set to auto
+        if not interpreter or interpreter == "auto":
+            lower = clean_path.lower()
+            if lower.endswith(('.sh', '.bash')):
+                interpreter = "bash"
+            elif lower.endswith('.py'):
+                interpreter = "python3"
+            elif os.access(clean_path, os.X_OK):
+                interpreter = "executable"
+            else:
+                try:
+                    with open(clean_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        first_line = f.readline()
+                        if 'python' in first_line:
+                            interpreter = "python3"
+                        elif 'bash' in first_line or 'sh' in first_line:
+                            interpreter = "bash"
+                        else:
+                            interpreter = "executable"
+                except Exception:
+                    interpreter = "bash"
+
+        if not icon:
+            icon = "fa-terminal" if interpreter == "bash" else ("fa-python" if interpreter == "python3" else "fa-gear")
+
+        # Make file executable if permissions permit
+        try:
+            os.chmod(clean_path, os.stat(clean_path).st_mode | 0o755)
+        except Exception:
+            pass
+
+        script_info = {
+            "id": script_id,
+            "name": name,
+            "script": base_name,
+            "path": clean_path,
+            "dir": os.path.dirname(clean_path),
+            "python": "python3",
+            "interpreter": interpreter,
+            "category": category,
+            "icon": icon,
+            "desc": desc or f"Existing {interpreter.upper()} script at {clean_path}",
+            "is_existing": True,
+            "cron_pattern": rf'({re.escape(base_name)}|cron_runner\.py\s+{script_id})'
+        }
+
+        save_custom_script(script_id, script_info)
+        add_history(f"Linked Existing Script '{name}'", script_id, "Dashboard Creator", "Linked")
+        send_alert("Script Linked", f"Existing Script Linked: {name}", f"Script `{clean_path}` added to dashboard in `{category}`.")
+
+        if schedule:
+            parts = schedule.split()
+            if len(parts) == 5:
+                update_script_crontab(script_id, script_info, [{
+                    "dow": parts[4],
+                    "hour": parts[1],
+                    "minute": parts[0]
+                }], True)
+
+        return jsonify({"message": f"Successfully linked existing script '{name}'", "id": script_id})
+
+    # Mode 2: Create Brand New Script File
     if not name:
         return jsonify({"error": "Script name is required"}), 400
 
-    # Generate safe id and filename
-    script_id = re.sub(r'[^a-zA-Z0-9_]', '_', name.lower())
-    filename = f"{script_id}.py"
-    filepath = os.path.join(BASE_DIR, filename)
+    code = data.get("code", "").strip()
+    script_type = data.get("type", "python").lower()  # "python" or "bash"
+    script_id = re.sub(r'[^a-zA-Z0-9_]', '_', name.lower()).strip('_')
+    if not script_id:
+        script_id = f"script_{int(time.time())}"
 
-    os.makedirs(BASE_DIR, exist_ok=True)
-    if not code:
-        code = f"""#!/usr/bin/env python3
+    if script_type in ["bash", "sh"]:
+        filename = f"{script_id}.sh"
+        interpreter = "bash"
+        if not icon:
+            icon = "fa-terminal"
+        if not code:
+            code = f"""#!/usr/bin/env bash
+# {name}
+set -e
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting {name}..."
+sleep 1
+echo "Execution finished successfully."
+"""
+    else:
+        filename = f"{script_id}.py"
+        interpreter = "python3"
+        if not icon:
+            icon = "fa-code"
+        if not code:
+            code = f"""#!/usr/bin/env python3
 # {name}
 import time
 from datetime import datetime
 
 def main():
-    print(f"[{datetime.now()}] Starting {name}...")
+    print(f"[{{datetime.now()}}] Starting {name}...")
     time.sleep(1)
     print("Execution finished successfully.")
 
@@ -133,6 +288,8 @@ if __name__ == "__main__":
     main()
 """
 
+    filepath = os.path.join(BASE_DIR, filename)
+    os.makedirs(BASE_DIR, exist_ok=True)
     try:
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(code)
@@ -144,19 +301,21 @@ if __name__ == "__main__":
         "id": script_id,
         "name": name,
         "script": filename,
+        "path": filepath,
         "dir": BASE_DIR,
         "python": "python3",
+        "interpreter": interpreter,
         "category": category,
         "icon": icon,
         "desc": desc,
-        "cron_pattern": rf'({filename}|cron_runner\.py\s+{script_id})'
+        "is_existing": False,
+        "cron_pattern": rf'({re.escape(filename)}|cron_runner\.py\s+{script_id})'
     }
 
     save_custom_script(script_id, script_info)
     add_history(f"Created Custom Script '{name}'", script_id, "Dashboard Creator", "Created")
     send_alert("Script Created", f"New Script Registered: {name}", f"Script `{filename}` in category `{category}` has been added to dashboard.")
 
-    # Configure crontab if provided
     if schedule:
         parts = schedule.split()
         if len(parts) == 5:
@@ -191,16 +350,40 @@ def run_script(script_id):
 
     python_bin = sinfo.get("python", sys.executable)
     script_dir = sinfo.get("dir", BASE_DIR)
-    script_path = os.path.join(script_dir, script_name)
+    script_path = sinfo.get("path") or os.path.join(script_dir, script_name)
 
-    log_dir = os.path.join(script_dir, "logs")
+    log_dir = os.path.join(APP_DIR, "logs")
     os.makedirs(log_dir, exist_ok=True)
     log_path = sinfo.get("log", os.path.join(log_dir, f"{script_id}.log"))
 
-    cmd = f"nohup {python_bin} {script_path} > {log_path} 2>&1 &"
+    interpreter = (sinfo.get("interpreter") or "").lower()
+    if not interpreter:
+        if script_path.endswith(('.sh', '.bash')):
+            interpreter = "bash"
+        elif script_path.endswith('.py'):
+            interpreter = "python3"
+        elif os.access(script_path, os.X_OK):
+            interpreter = "executable"
+        else:
+            interpreter = "python3"
+
+    q_path = shlex.quote(script_path)
+    q_log = shlex.quote(log_path)
+
+    if interpreter in ["bash", "sh"]:
+        shell_bin = "/bin/bash" if interpreter == "bash" else "/bin/sh"
+        cmd = f"nohup {shell_bin} {q_path} > {q_log} 2>&1 &"
+    elif interpreter == "executable":
+        cmd = f"nohup {q_path} > {q_log} 2>&1 &"
+    else:
+        cmd = f"nohup {python_bin} {q_path} > {q_log} 2>&1 &"
+
+    run_cwd = script_dir if os.path.exists(script_dir) else os.path.dirname(script_path)
+    if not os.path.exists(run_cwd):
+        run_cwd = os.path.expanduser("~")
 
     try:
-        subprocess.Popen(cmd, shell=True, cwd=script_dir)
+        subprocess.Popen(cmd, shell=True, cwd=run_cwd)
         add_history(sinfo.get("name"), script_id, "Manual Dashboard", "Started")
         send_alert("Manual Execution", f"Script Triggered: {sinfo.get('name')}", f"Manual run triggered from Dashboard.")
         return jsonify({"message": f"Started {sinfo.get('name')} in background!"})
@@ -388,7 +571,7 @@ def manage_script_code(script_id):
     if not sinfo:
         return jsonify({"error": "Script not found"}), 404
 
-    filepath = os.path.join(sinfo.get("dir", BASE_DIR), sinfo.get("script"))
+    filepath = sinfo.get("path") or os.path.join(sinfo.get("dir", BASE_DIR), sinfo.get("script"))
 
     if request.method == 'GET':
         if os.path.exists(filepath):
