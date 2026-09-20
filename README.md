@@ -15,13 +15,16 @@ Designed to work dynamically out of the box on any Linux distribution with zero 
   Chronological execution history and failure logs with comprehensive captured terminal states, exit codes, execution durations, and interactive snapshot inspection modals.
 
 - **Storage Forecaster & SMART Analytics**:
-  Physical block-device I/O telemetry, SMART health grading, linear predictive capacity forecasting, and dynamic fast storage distribution across media, appdata, and system volumes.
+  Physical block-device I/O telemetry, SMART health grading, linear predictive capacity forecasting, and dynamic storage capacity breakdown across media, archives, and system volumes.
 
 - **Automated Watchdog Auto-Healing**:
-  Configurable background health monitor that tracks homelab containers and core systemd daemons, automatically performing self-healing restarts upon failure with event logging.
+  Configurable background health monitor that tracks homelab containers and core systemd daemons, automatically performing self-healing restarts upon failure with clearable incident history.
 
 - **Script Runner & Visual Crontab Scheduler**:
-  One-click execution with confirmation modals and real-time status; per-day visual crontab editor, batch task execution, and an in-browser script creator.
+  One-click execution with confirmation modals and real-time status; link existing system scripts (`.sh`, `.py`, binaries) with live host auto-discovery or write new scripts, edit per-day visual crontab schedules, and execute batch tasks.
+
+- **Dynamic Network & UFW Security**:
+  Auto-detects live IPv4 network interfaces, inspects real-time UFW firewall status, and displays active listening ports mapped to standard network services.
 
 - **Container & Service Orchestration**:
   Auto-discovered running Docker containers with port mapping, live status, start/stop/restart controls, and systemd service supervision.
