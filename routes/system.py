@@ -3,6 +3,10 @@ import json
 import re
 import time
 import subprocess
+try:
+    import psutil
+except Exception:
+    psutil = None
 from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request
 from config import (
@@ -369,17 +373,28 @@ def network_security_route():
 
     interfaces = {}
     try:
-        if_addrs = psutil.net_if_addrs()
-        for iface, addrs in if_addrs.items():
-            if iface.startswith(('lo', 'docker', 'br-', 'veth')):
-                continue
-            for a in addrs:
-                family_name = getattr(getattr(a, 'family', None), 'name', '')
-                if family_name == 'AF_INET' or getattr(a, 'family', None) == 2:
-                    if not a.address.startswith('127.'):
-                        interfaces[iface] = a.address
+        if psutil:
+            if_addrs = psutil.net_if_addrs()
+            for iface, addrs in if_addrs.items():
+                if iface.startswith(('lo', 'docker', 'br-', 'veth')):
+                    continue
+                for a in addrs:
+                    family_name = getattr(getattr(a, 'family', None), 'name', '')
+                    if family_name == 'AF_INET' or getattr(a, 'family', None) == 2:
+                        if not a.address.startswith('127.'):
+                            interfaces[iface] = a.address
     except Exception:
         pass
+
+    if not interfaces:
+        try:
+            res_ip = subprocess.run(["ip", "-4", "route", "get", "1.1.1.1"], capture_output=True, text=True, timeout=2)
+            for part in res_ip.stdout.split():
+                if "." in part and not part.startswith("1.1.1.1") and not part.startswith("127."):
+                    interfaces["primary"] = part
+                    break
+        except Exception:
+            pass
 
     if not interfaces:
         interfaces["localhost"] = "127.0.0.1"
