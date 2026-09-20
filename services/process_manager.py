@@ -17,6 +17,20 @@ def get_history(limit=60):
     except Exception:
         return []
 
+import time
+KIOSK_STATE = {"reload_token": int(time.time()), "last_ping": 0}
+
+def get_kiosk_state():
+    return dict(KIOSK_STATE)
+
+def trigger_kiosk_reload():
+    KIOSK_STATE["reload_token"] = int(time.time())
+    return KIOSK_STATE["reload_token"]
+
+def record_kiosk_ping():
+    KIOSK_STATE["last_ping"] = int(time.time())
+    return KIOSK_STATE["reload_token"]
+
 def add_history(name, script_id, trigger="Manual Dashboard", status="Completed (Success)"):
     history = []
     if os.path.exists(HISTORY_FILE):

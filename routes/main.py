@@ -21,31 +21,30 @@ def lite():
     return resp
 
 @main_bp.route('/api/kiosk/reload', methods=['POST'])
-def trigger_kiosk_reload():
-    import time
+def trigger_kiosk_reload_route():
     from flask import jsonify
-    from config import KIOSK_STATE
-    KIOSK_STATE["reload_token"] = int(time.time())
-    return jsonify({"success": True, "reload_token": KIOSK_STATE["reload_token"], "message": "Wall tablet reload signal dispatched!"})
+    from services.process_manager import trigger_kiosk_reload
+    token = trigger_kiosk_reload()
+    return jsonify({"success": True, "reload_token": token, "message": "Wall tablet reload signal dispatched!"})
 
 @main_bp.route('/api/kiosk/ping', methods=['POST', 'GET'])
 def ping_kiosk():
-    import time
     from flask import jsonify
-    from config import KIOSK_STATE
-    KIOSK_STATE["last_ping"] = int(time.time())
-    return jsonify({"success": True, "reload_token": KIOSK_STATE["reload_token"]})
+    from services.process_manager import record_kiosk_ping
+    token = record_kiosk_ping()
+    return jsonify({"success": True, "reload_token": token})
 
 @main_bp.route('/api/kiosk/status', methods=['GET'])
 def kiosk_status():
     import time
     from flask import jsonify
-    from config import KIOSK_STATE
-    is_online = (time.time() - KIOSK_STATE.get("last_ping", 0)) < 45
+    from services.process_manager import get_kiosk_state
+    state = get_kiosk_state()
+    is_online = (time.time() - state.get("last_ping", 0)) < 45
     return jsonify({
         "online": is_online,
-        "last_ping": KIOSK_STATE.get("last_ping", 0),
-        "reload_token": KIOSK_STATE.get("reload_token", 0)
+        "last_ping": state.get("last_ping", 0),
+        "reload_token": state.get("reload_token", 0)
     })
 
 _WEATHER_CACHE = {"timestamp": 0, "data": None}

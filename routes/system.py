@@ -21,6 +21,7 @@ from services import (
     add_history,
     send_alert
 )
+from services.dns_history import record_dns_daily_snapshot, get_dns_history
 
 system_bp = Blueprint('system', __name__)
 
@@ -53,6 +54,7 @@ def save_telemetry_snapshot():
     try:
         history = load_telemetry_history()
         stats = get_system_stats()
+        record_dns_daily_snapshot(stats)
         cpu_val = float(stats.get("cpu_percent", "0%").replace("%", ""))
         ram_val = float(stats.get("ram_percent", "0%").replace("%", ""))
         gpu_val = float(stats.get("gpu_percent", "0%").replace("%", ""))
@@ -364,3 +366,9 @@ def telemetry_history_route():
         "gpu": [item.get("gpu", 0) for item in history],
         "dns_block": [item.get("dns_block", 0) for item in history]
     })
+
+@system_bp.route('/api/system/dns-history', methods=['GET'])
+def dns_history_route():
+    days = int(request.args.get("days", 7))
+    return jsonify(get_dns_history(days))
+

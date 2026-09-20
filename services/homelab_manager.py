@@ -149,3 +149,55 @@ def discover_docker_containers():
         pass
 
     return discovered
+
+def manage_homelab_unit(service_id, action):
+    from config import get_all_homelab_services
+    services = get_all_homelab_services()
+    svc = next((s for s in services if s["id"] == service_id or s.get("container") == service_id), None)
+    container = svc.get("container") if svc else service_id
+    systemd = svc.get("systemd") if svc else None
+    svc_name = svc["name"] if svc else (systemd or container)
+
+    if systemd:
+        cmd = ["sudo", "-n", "systemctl", action, systemd]
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+            if res.returncode == 0:
+                return True, f"Successfully performed '{action}' on {svc_name}"
+            return False, res.stderr or f"Failed to {action} {systemd}"
+        except Exception as e:
+            return False, str(e)
+    else:
+        try:
+            res = subprocess.run(["docker", action, container], capture_output=True, text=True, timeout=15)
+            if res.returncode != 0:
+                res = subprocess.run(["sudo", "-n", "docker", action, container], capture_output=True, text=True, timeout=15)
+            if res.returncode == 0:
+                return True, f"Successfully performed '{action}' on {svc_name}"
+            return False, res.stderr or f"Failed to {action} {container}"
+        except Exception as e:
+            return False, str(e)
+
+def get_homelab_logs(service_id):
+    from config import get_all_homelab_services
+    services = get_all_homelab_services()
+    svc = next((s for s in services if s["id"] == service_id or s.get("container") == service_id), None)
+    container = svc.get("container") if svc else service_id
+    systemd = svc.get("systemd") if svc else None
+
+    if systemd:
+        try:
+            res = subprocess.run(["sudo", "-n", "journalctl", "-u", systemd, "-n", "100", "--no-pager"], capture_output=True, text=True, timeout=15)
+            logs = res.stdout + res.stderr
+            return logs if logs.strip() else "No logs available."
+        except Exception as e:
+            return f"Error fetching logs: {e}"
+    else:
+        try:
+            res = subprocess.run(["docker", "logs", "--tail", "100", container], capture_output=True, text=True, timeout=15)
+            if res.returncode != 0:
+                res = subprocess.run(["sudo", "-n", "docker", "logs", "--tail", "100", container], capture_output=True, text=True, timeout=15)
+            logs = res.stdout + res.stderr
+            return logs if logs.strip() else "No logs available."
+        except Exception as e:
+            return f"Error fetching logs: {e}"

@@ -41,6 +41,7 @@ def get_primary_ip():
 PRIMARY_IP = get_primary_ip()
 PORT = int(os.environ.get("PORT", 5000))
 HOST = os.environ.get("HOST", "0.0.0.0")
+DNS_SAVINGS_KB_PER_BLOCK = int(os.environ.get("DNS_SAVINGS_KB_PER_BLOCK", 300))
 
 # --- KIOSK STATE ---
 import time
