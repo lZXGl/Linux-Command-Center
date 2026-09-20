@@ -54,3 +54,4 @@ screenshots/
 .vscode/
 *.swp
 *.swo
+graphify-out/
