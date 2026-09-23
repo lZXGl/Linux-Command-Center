@@ -5,7 +5,15 @@ A modern, fast, modular **web-based Command Center** for home servers, homelabs,
 Designed to work dynamically out of the box on any Linux distribution with zero hardcoded paths or environment-specific dependencies.
 
 <p align="center">
-  <img src="docs/assets/dashboard_preview.png" alt="Linux Command Center Dashboard" width="100%" />
+  <img src="docs/assets/launch_preview.gif" alt="Linux Command Center Dashboard Preview" width="100%" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Active_v2.0-30d158?style=flat-square&logo=linux&logoColor=white" alt="Status Active" />
+  <img src="https://img.shields.io/badge/Watchdog-Auto--Healing-2997ff?style=flat-square&logo=docker&logoColor=white" alt="Watchdog Auto-Healing" />
+  <img src="https://img.shields.io/badge/Local_AI-Ollama_Copilot-c084fc?style=flat-square&logo=openai&logoColor=white" alt="Local AI" />
+  <img src="https://img.shields.io/badge/Python-3.10+-38bdf8?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+" />
+  <img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="License" />
 </p>
 
 ---

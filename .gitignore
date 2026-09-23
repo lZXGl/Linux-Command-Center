@@ -49,6 +49,10 @@ screenshots/
 *.jpeg
 !docs/assets/*.png
 !docs/assets/*.jpg
+!docs/assets/*.gif
+
+# Brag Video Builds (Keep git clone lightweight)
+brag-output*/
 
 # IDE & OS
 .DS_Store
