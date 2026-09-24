@@ -2879,6 +2879,7 @@ if __name__ == "__main__":
     }
 
     function previewMedia(name, url) {
+        stopAllModalMedia();
         const isImg = /\.(gif|png|jpg|jpeg|webp)$/i.test(name);
         document.getElementById('modal-title').innerText = `Preview Media: ${name}`;
         
@@ -4667,7 +4668,23 @@ ${data.analysis || 'Analysis could not be generated.'}
         }
     }
 
+    function stopAllModalMedia() {
+        document.querySelectorAll('.modal video, .modal audio').forEach(media => {
+            try {
+                media.pause();
+                media.currentTime = 0;
+                media.removeAttribute('src');
+                media.load();
+            } catch (e) {}
+        });
+        const modalBody = document.getElementById('modal-body');
+        if (modalBody && modalBody.querySelector('video, audio')) {
+            modalBody.innerHTML = '';
+        }
+    }
+
     function closeModal() {
+        stopAllModalMedia();
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
@@ -4679,6 +4696,9 @@ ${data.analysis || 'Analysis could not be generated.'}
         const hasActiveModal = !!document.querySelector('.modal.active');
         document.body.classList.toggle('modal-open', hasActiveModal);
         document.body.style.overflow = hasActiveModal ? 'hidden' : '';
+        if (!hasActiveModal) {
+            stopAllModalMedia();
+        }
     });
     document.querySelectorAll('.modal').forEach(m => {
         modalObserver.observe(m, { attributes: true, attributeFilter: ['class'] });
