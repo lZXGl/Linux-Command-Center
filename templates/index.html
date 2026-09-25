@@ -83,20 +83,6 @@
         </div>
     </header>
 
-    <!-- Apple Spotlight Style Search Bar -->
-    <div class="global-search-container" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.85rem;">
-        <div class="search-icon-box">
-            <i class="fa-solid fa-magnifying-glass"></i>
-        </div>
-        <div style="flex: 1; position: relative; display: flex; align-items: center;">
-            <input type="text" id="global-search-input" placeholder="Search Python scripts, Dockge containers, services, and ports... (Press '/' or Ctrl+K)" oninput="filterCardsInstant(this.value)" style="width: 100%; padding: 0.55rem 3.2rem 0.55rem 0; background: transparent; border: none; color: var(--text-primary); font-size: 0.95rem; font-weight: 500; outline: none; letter-spacing: -0.01em;">
-            <button id="search-clear-btn" onclick="clearGlobalSearch()" style="display: none; position: absolute; right: 2.8rem; width: 22px; height: 22px; border-radius: 50%; background: rgba(255, 255, 255, 0.15); border: none; color: #a1a1a6; cursor: pointer; font-size: 0.75rem; align-items: center; justify-content: center; padding: 0;" title="Clear search">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <span style="position: absolute; right: 0.6rem; background: rgba(255, 255, 255, 0.08); color: #86868b; border: 1px solid rgba(255, 255, 255, 0.12); padding: 0.18rem 0.5rem; border-radius: 6px; font-size: 0.72rem; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'JetBrains Mono', monospace; font-weight: 600; pointer-events: none;">/</span>
-        </div>
-    </div>
-
     <!-- Category Filter Tabs with Color Accents & Group Dividers -->
     <div class="category-tabs">
         <div class="category-tabs-inner" id="categoryTabsInner">
