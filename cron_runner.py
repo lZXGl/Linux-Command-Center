@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Cron Runner Wrapper for Linux Command Center.
+Cron Runner Wrapper for Homelab-Command-Center.
 Executes scheduled cron jobs, records the run into execution_history.json as 'Scheduled Cron',
 and sends alert notifications if configured.
 """

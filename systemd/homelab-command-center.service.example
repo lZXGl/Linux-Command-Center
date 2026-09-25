@@ -1,11 +1,11 @@
 [Unit]
-Description=Linux Command Center Dashboard & Server Orchestrator
+Description=Homelab-Command-Center Dashboard & Server Orchestrator
 After=network.target docker.service
 
 [Service]
 Type=simple
 User=YOUR_LINUX_USER
-WorkingDirectory=/opt/linux-command-center
+WorkingDirectory=/opt/Homelab-Command-Center
 Environment="PORT=5000"
 Environment="HOST=0.0.0.0"
 ExecStart=/usr/bin/python3 app.py

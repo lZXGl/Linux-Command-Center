@@ -70,7 +70,7 @@ def send_alert(event_type="General", title="Alert", message="", details=None):
     if discord_url and discord_url.startswith("http"):
         try:
             payload = {
-                "username": "Linux Command Center",
+                "username": "Homelab-Command-Center",
                 "avatar_url": "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/docker.png",
                 "embeds": [{
                     "title": f"🔔 {title}",

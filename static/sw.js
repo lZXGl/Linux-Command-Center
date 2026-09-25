@@ -1,5 +1,5 @@
 // Progressive Web App Service Worker
-const CACHE_NAME = 'linux-command-center-v1';
+const CACHE_NAME = 'homelab-command-center-v1';
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();

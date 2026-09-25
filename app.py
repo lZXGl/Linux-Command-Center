@@ -21,7 +21,7 @@ from routes import (
 )
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'linux-command-center-secret-key-change-me'
+app.config['SECRET_KEY'] = 'homelab-command-center-secret-key-change-me'
 
 # Register modular blueprints
 app.register_blueprint(main_bp)
@@ -36,5 +36,5 @@ app.register_blueprint(smart_storage_bp)
 app.register_blueprint(opencode_bp)
 
 if __name__ == "__main__":
-    print(f"🚀 Linux Command Center starting on http://{HOST}:{PORT}")
+    print(f"🚀 Homelab-Command-Center starting on http://{HOST}:{PORT}")
     app.run(host=HOST, port=PORT, debug=False)

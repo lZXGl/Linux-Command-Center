@@ -1,11 +1,11 @@
-# Linux Command Center
+# Homelab-Command-Center
 
 A modern, fast, modular **web-based Command Center** for home servers, homelabs, Linux VPS, and multi-service server orchestration.
 
 Designed to work dynamically out of the box on any Linux distribution with zero hardcoded paths or environment-specific dependencies.
 
 <p align="center">
-  <img src="docs/assets/launch_preview.gif" alt="Linux Command Center Dashboard Preview" width="100%" />
+  <img src="docs/assets/launch_preview.gif" alt="Homelab-Command-Center Dashboard Preview" width="100%" />
 </p>
 
 <p align="center">
@@ -69,8 +69,8 @@ Designed to work dynamically out of the box on any Linux distribution with zero 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/lZXGl/linux-command-center.git
-cd linux-command-center
+git clone https://github.com/lZXGl/Homelab-Command-Center.git
+cd Homelab-Command-Center
 ```
 
 ### 2. Install dependencies
@@ -101,7 +101,7 @@ Open **`http://<server-ip>:5000`** in your browser.
 ## Architecture
 
 ```
-linux-command-center/
+Homelab-Command-Center/
 ├── app.py                     # Flask application entrypoint
 ├── config.py                  # Core configuration & dynamic environment loader
 ├── cron_runner.py             # Crontab execution wrapper & history logger
@@ -136,7 +136,7 @@ linux-command-center/
 │   └── backup_task.py         # Daily snapshot verification
 ├── static/                    # Shaders, JS, CSS and static assets
 ├── systemd/                   # Systemd unit template
-│   └── linux-command-center.service.example
+│   └── homelab-command-center.service.example
 └── templates/
     ├── index.html             # Full-featured single-page dashboard UI
     └── lite.html              # Ultra-fast kiosk & mobile lite UI
@@ -146,13 +146,13 @@ linux-command-center/
 
 ## Systemd Service (Auto-start on Boot)
 
-To run Linux Command Center as a systemd background service:
+To run Homelab-Command-Center as a systemd background service:
 
 ```bash
-sudo cp systemd/linux-command-center.service.example /etc/systemd/system/linux-command-center.service
-sudo nano /etc/systemd/system/linux-command-center.service   # Adjust User and WorkingDirectory
+sudo cp systemd/homelab-command-center.service.example /etc/systemd/system/homelab-command-center.service
+sudo nano /etc/systemd/system/homelab-command-center.service   # Adjust User and WorkingDirectory
 sudo systemctl daemon-reload
-sudo systemctl enable --now linux-command-center.service
+sudo systemctl enable --now homelab-command-center.service
 ```
 
 ---

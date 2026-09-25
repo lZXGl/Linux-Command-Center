@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Linux Command Center - Generic Automated System Updater
+# Homelab-Command-Center - Generic Automated System Updater
 # ==============================================================================
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 LOGFILE="$DIR/system_update.log"

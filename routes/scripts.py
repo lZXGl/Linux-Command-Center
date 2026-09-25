@@ -516,7 +516,7 @@ def fetch_log_content_for_id(script_id, max_chars=25000):
     # 3. Check if script_id is a verified systemd unit
     systemd_services = get_all_systemd_services()
     u_match = next((s for s in systemd_services if s.get("id") == script_id or s.get("unit", "").startswith(script_id)), None)
-    if u_match or script_id in ["jellyfin", "all-in-one-dash", "linux-command-center"]:
+    if u_match or script_id in ["jellyfin", "all-in-one-dash", "homelab-command-center", "linux-command-center"]:
         unit_name = u_match.get("unit") if u_match else (f"{script_id}.service" if not script_id.endswith(".service") else script_id)
         try:
             res = subprocess.run(["journalctl", "-u", unit_name, "-n", "100", "--no-pager"], capture_output=True, text=True, timeout=2)

@@ -1,6 +1,6 @@
 {
-  "name": "Linux Command Center",
-  "short_name": "Command Center",
+  "name": "Homelab-Command-Center",
+  "short_name": "Homelab",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#09090b",
