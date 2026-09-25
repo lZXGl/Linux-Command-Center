@@ -87,25 +87,20 @@ def get_cpu_temp():
         pass
     return "N/A"
 
-def get_dns_stats():
+_ADGUARD_CACHE = {"ts": 0.0, "total": 0, "blocked": 0}
+ADGUARD_CACHE_TTL_SECONDS = 60
+
+def _get_adguard_24h():
+    now = time.time()
+    cached = _ADGUARD_CACHE
+    if now - cached["ts"] < ADGUARD_CACHE_TTL_SECONDS:
+        return cached["total"], cached["blocked"]
+
     from datetime import datetime, timezone, timedelta
     adguard_total, adguard_blocked = 0, 0
-    pihole_total, pihole_blocked = 0, 0
-    
-    # 1. Pi-hole v6 API (24-Hour metrics)
-    try:
-        req = urllib.request.Request("http://127.0.0.1/api/stats/summary", headers={"User-Agent": "LinuxCommandCenter"})
-        with urllib.request.urlopen(req, timeout=1.5) as resp:
-            data = json.loads(resp.read().decode())
-            queries = data.get("queries", {})
-            pihole_total = queries.get("total", 0)
-            pihole_blocked = queries.get("blocked", 0)
-    except Exception:
-        pass
-
-    # 2. AdGuard Home QueryLog (Filtered to 24 hours to match Pi-hole 24h metrics)
     default_adguard = os.path.expanduser("~/homelab/adguard/work/data/querylog.json")
     path = os.environ.get("ADGUARD_QUERYLOG_PATH", default_adguard if os.path.exists(default_adguard) else "/opt/AdGuardHome/data/querylog.json")
+
     if os.path.exists(path):
         try:
             now_utc = datetime.now(timezone.utc)
@@ -135,12 +130,34 @@ def get_dns_stats():
         except Exception:
             pass
 
+    cached.update({"ts": now, "total": adguard_total, "blocked": adguard_blocked})
+    return adguard_total, adguard_blocked
+
+def get_dns_stats():
+    from config import DNS_SAVINGS_KB_PER_BLOCK
+    adguard_total, adguard_blocked = _get_adguard_24h()
+    pihole_total, pihole_blocked = 0, 0
+    
+    # 1. Pi-hole v6 API (24-Hour metrics)
+    try:
+        req = urllib.request.Request("http://127.0.0.1/api/stats/summary", headers={"User-Agent": "LinuxCommandCenter"})
+        with urllib.request.urlopen(req, timeout=1.5) as resp:
+            data = json.loads(resp.read().decode())
+            queries = data.get("queries", {})
+            pihole_total = queries.get("total", 0)
+            pihole_blocked = queries.get("blocked", 0)
+    except Exception:
+        pass
+
     combined_total = adguard_total + pihole_total
     combined_blocked = adguard_blocked + pihole_blocked
     block_percent = f"{(combined_blocked / combined_total * 100):.1f}%" if combined_total > 0 else "0.0%"
 
     def fmt_num(n):
         return f"{n:,}"
+
+    def calc_saved_mb(blocked):
+        return round((blocked * DNS_SAVINGS_KB_PER_BLOCK) / 1024.0, 1)
 
     return {
         "adguard_total": fmt_num(adguard_total),
@@ -149,7 +166,16 @@ def get_dns_stats():
         "pihole_blocked": fmt_num(pihole_blocked),
         "combined_total": fmt_num(combined_total),
         "combined_blocked": fmt_num(combined_blocked),
-        "block_percent": block_percent
+        "block_percent": block_percent,
+        "adguard_saved_mb": calc_saved_mb(adguard_blocked),
+        "pihole_saved_mb": calc_saved_mb(pihole_blocked),
+        "combined_saved_mb": calc_saved_mb(combined_blocked),
+        "adguard_total_n": adguard_total,
+        "adguard_blocked_n": adguard_blocked,
+        "pihole_total_n": pihole_total,
+        "pihole_blocked_n": pihole_blocked,
+        "combined_total_n": combined_total,
+        "combined_blocked_n": combined_blocked,
     }
 
 def get_disk_usage_stats():

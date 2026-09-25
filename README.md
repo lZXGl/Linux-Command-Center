@@ -9,7 +9,7 @@ Designed to work dynamically out of the box on any Linux distribution with zero 
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Active_v2.0-30d158?style=flat-square&logo=linux&logoColor=white" alt="Status Active" />
+  <img src="https://img.shields.io/badge/Version-v1.1.0-30d158?style=flat-square&logo=linux&logoColor=white" alt="Version v1.1.0" />
   <img src="https://img.shields.io/badge/Watchdog-Auto--Healing-2997ff?style=flat-square&logo=docker&logoColor=white" alt="Watchdog Auto-Healing" />
   <img src="https://img.shields.io/badge/Local_AI-Ollama_Copilot-c084fc?style=flat-square&logo=openai&logoColor=white" alt="Local AI" />
   <img src="https://img.shields.io/badge/Python-3.10+-38bdf8?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+" />
@@ -20,8 +20,20 @@ Designed to work dynamically out of the box on any Linux distribution with zero 
 
 ## Features
 
-- **Live Telemetry & Health Monitoring**:
-  Real-time CPU usage, thermal temperatures, RAM percentage, multi-drive storage allocation, network bandwidth throughput, DNS query/blocked metrics for Pi-hole & AdGuard Home, and 24h trend charts.
+- **Interactive Spotlight Command Palette (`Ctrl+K` / `/`)**:
+  0ms-latency instant keyboard command switcher across automation scripts, Docker containers, system actions, and view tabs with scope filtering (`All`, `Scripts`, `Services`, `Actions`).
+
+- **Spring Physics & Fluid Navigation**:
+  Apple HIG & Emil Kowalski craft-inspired sliding active pill indicator with physical spring easing and skeleton loading states for zero layout shift.
+
+- **Synthesized Tactile Audio Feedback**:
+  Pure Web Audio API synthesizer generating subtle, crisp feedback clicks for interface interactions, with one-tap toggle controls and state persistence.
+
+- **Hold-to-Reboot Safety Protection**:
+  1.5-second clip-path animated press-and-hold safety confirmation for system reboots and critical operations to prevent accidental clicks.
+
+- **Live Telemetry & 24-Hour DNS Bandwidth Tracking**:
+  Real-time CPU, thermal temps, RAM, multi-mount storage, network bandwidth throughput, and 24-hour DNS query metrics (Pi-hole & AdGuard Home) with saved bandwidth calculation.
 
 - **Diagnostics Timeline & Visual Failure Snapshots**:
   Chronological execution history and failure logs with comprehensive captured terminal states, exit codes, execution durations, and interactive snapshot inspection modals.

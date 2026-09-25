@@ -1750,6 +1750,7 @@ if __name__ == "__main__":
                             (!['smart-storage-tab','system-tab','pipelines-tab','ai-tab'].includes(cat) && btn.innerText.includes(cat));
             btn.classList.toggle('active', isMatch);
         });
+        if (typeof updateTabSpring === 'function') updateTabSpring();
         renderContent(true);
     }
 
@@ -4736,12 +4737,6 @@ ${data.analysis || 'Analysis could not be generated.'}
                 envLabel.innerText = 'ACTIVE';
             }
         }
-
-        if (!isDev) {
-            document.querySelectorAll('.dev-only-tab').forEach(el => el.remove());
-            const promoView = document.getElementById('promotion-tab-view');
-            if (promoView) promoView.remove();
-        }
     }
 
     updateEnvironmentBadge();
@@ -5144,20 +5139,561 @@ ${data.analysis || 'Analysis could not be generated.'}
         modal.classList.add('active');
     }
 
-    // Smart Polling: Pause when page is hidden/minimized to save mobile battery & CPU
-    setInterval(() => {
-        if (document.hidden) return;
-        loadScripts(false);
-    }, 6000);
+    // ==========================================================================
+    // SOUND EFFECTS & TACTILE AUDIO FEEDBACK ENGINE (WEB AUDIO SYNTHESIZER)
+    // ==========================================================================
+    let audioCtx = null;
+    let lastTickTime = 0;
 
-    setInterval(() => {
-        if (document.hidden) return;
-        loadStats();
-    }, 5000);
+    function isSoundEffectsEnabled() {
+        const stored = localStorage.getItem('sound_effects_enabled');
+        if (stored === null) return true;
+        return stored === 'true';
+    }
+    window.isSoundEffectsEnabled = isSoundEffectsEnabled;
 
-    setInterval(() => {
-        if (document.hidden) return;
-        if (currentCategory === 'Video Automation Studio' || videoRenderCheckTimer) {
-            loadVideoFiles();
+    function toggleSoundEffects(enabled) {
+        localStorage.setItem('sound_effects_enabled', enabled ? 'true' : 'false');
+        updateSoundUIState(enabled);
+        if (enabled) {
+            playTactileTick(600, 0.02, 0.1);
+            showToast('Sound Effects Enabled', 'info', 2500);
+        } else {
+            showToast('Sound Effects Muted', 'info', 2500);
         }
-    }, 4000);
+    }
+    window.toggleSoundEffects = toggleSoundEffects;
+
+    function updateSoundUIState(enabled = null) {
+        if (enabled === null) enabled = isSoundEffectsEnabled();
+        const toggle = document.getElementById('sound-effects-toggle');
+        const icon = document.getElementById('sound-toggle-icon');
+        const text = document.getElementById('sound-toggle-text');
+        if (toggle) toggle.checked = enabled;
+        if (icon) {
+            icon.className = enabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+            icon.style.color = enabled ? 'var(--accent-primary)' : 'var(--text-secondary)';
+        }
+        if (text) {
+            text.innerText = enabled ? 'Sound: ON' : 'Sound: OFF';
+            text.style.color = enabled ? 'var(--accent-green)' : 'var(--text-secondary)';
+        }
+    }
+    window.updateSoundUIState = updateSoundUIState;
+
+    function playTactileTick(freq = 520, duration = 0.012, gainLevel = 0.08) {
+        if (!isSoundEffectsEnabled()) return;
+        const now = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+        if (now - lastTickTime < 35) return;
+        lastTickTime = now;
+
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(gainLevel, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {}
+    }
+    window.playTactileTick = playTactileTick;
+
+    // Zero-latency delegated listener covering interactive UI controls
+    document.addEventListener('pointerdown', (e) => {
+        if (!isSoundEffectsEnabled()) return;
+        const interactive = e.target.closest('button, .btn, .tab-btn, .tasks-pill, .stat-pill, .palette-item, .palette-scope-btn, .palette-clear-btn, .theme-studio-card, .shader-studio-card, .switch, .slider, .close-btn, [role="button"], [onclick], a, select, input[type="checkbox"], input[type="radio"]');
+        if (interactive) {
+            if (interactive.disabled || interactive.classList.contains('disabled') || interactive.getAttribute('aria-disabled') === 'true') {
+                return;
+            }
+            playTactileTick(520, 0.012, 0.08);
+        }
+    });
+
+    // ==========================================================================
+    // BLUR MASK CROSSFADE HELPERS
+    // ==========================================================================
+    function applyBlurMaskCrossfade(btn, updateContentCallback) {
+        if (!btn) {
+            if (typeof updateContentCallback === 'function') updateContentCallback();
+            return;
+        }
+        btn.classList.add('btn-blur-morphing');
+        playTactileTick(680, 0.018);
+        setTimeout(() => {
+            if (typeof updateContentCallback === 'function') updateContentCallback();
+            setTimeout(() => btn.classList.remove('btn-blur-morphing'), 30);
+        }, 120);
+    }
+    window.applyBlurMaskCrossfade = applyBlurMaskCrossfade;
+
+    function crossfadeElement(el, updateCallback, durationMs = 130) {
+        if (!el) {
+            if (updateCallback) updateCallback();
+            return;
+        }
+        el.classList.add('blurring');
+        setTimeout(() => {
+            if (updateCallback) updateCallback();
+            setTimeout(() => el.classList.remove('blurring'), 20);
+        }, durationMs);
+    }
+    window.crossfadeElement = crossfadeElement;
+
+    // ==========================================================================
+    // TAB-SPRING INDICATOR CONTROLLER
+    // ==========================================================================
+    function updateTabSpring() {
+        const activeBtn = document.querySelector('.category-tabs-inner .tab-btn.active');
+        const pill = document.getElementById('tabSpringPill');
+        if (!activeBtn || !pill) return;
+        const left = activeBtn.offsetLeft;
+        const width = activeBtn.offsetWidth;
+        pill.style.setProperty('--tab-x', `${left}px`);
+        pill.style.setProperty('--tab-w', `${width}px`);
+    }
+    window.updateTabSpring = updateTabSpring;
+    window.addEventListener('resize', updateTabSpring);
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(updateTabSpring, 80);
+        setTimeout(updateSoundUIState, 100);
+    });
+
+    // ==========================================================================
+    // HOLD-TO-REBOOT CONTROLLER (1.5s Progress Fill & Snap Back)
+    // ==========================================================================
+    let rebootHoldTimeout = null;
+
+    function startHoldReboot(e, btn) {
+        if (e && e.button !== 0 && e.pointerType === 'mouse') return;
+        playTactileTick(420, 0.02);
+        btn.classList.add('holding');
+        const textSpan = btn.querySelector('.hold-text');
+        if (textSpan) {
+            textSpan.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Keep Holding... (1.5s)';
+        }
+
+        rebootHoldTimeout = setTimeout(async () => {
+            btn.classList.remove('holding');
+            if (textSpan) textSpan.innerHTML = '<i class="fa-solid fa-check"></i> Rebooting Server...';
+            playTactileTick(280, 0.08, 0.08);
+
+            try {
+                showToast('Initiating server reboot...', 'warning', 6000);
+                const res = await fetch('/api/system/reboot', { method: 'POST' });
+                const data = await res.json();
+                showToast(data.message || 'Reboot signal dispatched to Linux server!', 'info', 6000);
+            } catch (err) {
+                showToast('Reboot command sent to host!', 'info', 6000);
+            }
+
+            setTimeout(() => {
+                if (textSpan) textSpan.innerHTML = '<i class="fa-solid fa-power-off"></i> Hold to Reboot Server';
+            }, 3500);
+        }, 1500);
+    }
+    window.startHoldReboot = startHoldReboot;
+
+    function cancelHoldReboot(btn) {
+        if (rebootHoldTimeout) {
+            clearTimeout(rebootHoldTimeout);
+            rebootHoldTimeout = null;
+        }
+        btn.classList.remove('holding');
+        const textSpan = btn.querySelector('.hold-text');
+        if (textSpan && !textSpan.innerText.includes('Rebooting')) {
+            textSpan.innerHTML = '<i class="fa-solid fa-power-off"></i> Hold to Reboot Server';
+        }
+    }
+    window.cancelHoldReboot = cancelHoldReboot;
+
+    // ==========================================================================
+    // FREQUENCY GATING COMMAND & SETTINGS CENTER (RAYCAST AESTHETIC, 0ms)
+    // ==========================================================================
+    let currentPaletteScope = 'all';
+    let paletteSelectedIdx = 0;
+    let paletteCurrentItems = [];
+    const PALETTE_SCOPES = ['all', 'scripts', 'services', 'system'];
+
+    function openCommandPalette(scope = 'all') {
+        const backdrop = document.getElementById('paletteBackdrop');
+        const palette = document.getElementById('cmdPalette');
+        const input = document.getElementById('paletteInput');
+        if (!palette || !backdrop) return;
+
+        document.body.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+
+        backdrop.classList.add('open');
+        palette.classList.add('open');
+        playTactileTick(640, 0.012);
+
+        setPaletteScope(scope, false);
+
+        if (input) {
+            input.value = '';
+            input.focus();
+            input.select();
+        }
+        handlePaletteSearch('');
+    }
+    window.openCommandPalette = openCommandPalette;
+
+    function closeCommandPalette() {
+        const backdrop = document.getElementById('paletteBackdrop');
+        const palette = document.getElementById('cmdPalette');
+        if (backdrop) backdrop.classList.remove('open');
+        if (palette) palette.classList.remove('open');
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+    }
+    window.closeCommandPalette = closeCommandPalette;
+
+    function setPaletteScope(scope, triggerSearch = true) {
+        currentPaletteScope = scope || 'all';
+        document.querySelectorAll('.palette-scope-btn').forEach(btn => {
+            const isActive = btn.getAttribute('data-scope') === currentPaletteScope;
+            btn.classList.toggle('active', isActive);
+        });
+        playTactileTick(560, 0.01);
+        if (triggerSearch) {
+            const input = document.getElementById('paletteInput');
+            handlePaletteSearch(input ? input.value : '');
+        }
+    }
+    window.setPaletteScope = setPaletteScope;
+
+    function clearPaletteInput() {
+        const input = document.getElementById('paletteInput');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        handlePaletteSearch('');
+    }
+    window.clearPaletteInput = clearPaletteInput;
+
+    function handlePaletteSearch(query) {
+        const q = (query || '').trim().toLowerCase();
+
+        const clearBtn = document.getElementById('paletteClearBtn');
+        if (clearBtn) clearBtn.style.display = q ? 'flex' : 'none';
+
+        const resultsContainer = document.getElementById('paletteResults');
+        if (!resultsContainer) return;
+
+        const items = [];
+        const scope = currentPaletteScope;
+
+        // --- SYSTEM ACTIONS DEFINITIONS (SANITIZED) ---
+        const systemActions = [
+            {
+                id: 'sys-update',
+                group: 'System Actions',
+                title: 'Run Full System Update',
+                subtitle: 'Upgrade Linux packages, Python dependencies & Pi-hole rules',
+                icon: 'fa-solid fa-arrows-rotate',
+                iconBg: 'rgba(6, 182, 212, 0.18)',
+                iconColor: '#06b6d4',
+                tag: 'SYSTEM',
+                badge: 'RUN',
+                action: () => { closeCommandPalette(); triggerUpdateAll(); }
+            },
+            {
+                id: 'sys-backup',
+                group: 'System Actions',
+                title: 'Create Archive Backup',
+                subtitle: 'Snapshot configs, server state & scripts to backup directory',
+                icon: 'fa-solid fa-box-archive',
+                iconBg: 'rgba(59, 130, 246, 0.18)',
+                iconColor: '#3b82f6',
+                tag: 'BACKUP',
+                badge: 'CREATE',
+                action: () => { closeCommandPalette(); triggerBackup(); }
+            },
+            {
+                id: 'sys-alerts',
+                group: 'System Actions',
+                title: 'Configure Phone & Webhook Alerts',
+                subtitle: 'Manage Discord webhook and Telegram bot notifications',
+                icon: 'fa-solid fa-bell',
+                iconBg: 'rgba(245, 158, 11, 0.18)',
+                iconColor: '#f59e0b',
+                tag: 'ALERTS',
+                badge: 'CONFIG',
+                action: () => { closeCommandPalette(); openAlertsModal(); }
+            },
+            {
+                id: 'sys-heal',
+                group: 'System Actions',
+                title: 'Emergency Health Sweep (Watchdog Heal)',
+                subtitle: 'Check monitored services and resurrect crashed containers',
+                icon: 'fa-solid fa-heart-pulse',
+                iconBg: 'rgba(16, 185, 129, 0.18)',
+                iconColor: '#10b981',
+                tag: 'HEAL',
+                badge: 'SWEEP',
+                action: () => { closeCommandPalette(); runWatchdogSweepAction(); }
+            },
+            {
+                id: 'sys-reboot',
+                group: 'System Actions',
+                title: 'Hold to Reboot Linux Server',
+                subtitle: 'Emergency system restart (press & hold for 1.5s to trigger)',
+                icon: 'fa-solid fa-power-off',
+                iconBg: 'rgba(239, 68, 68, 0.2)',
+                iconColor: '#ef4444',
+                tag: 'CRITICAL',
+                badge: 'HOLD',
+                isHoldReboot: true,
+                action: () => {
+                    closeCommandPalette();
+                    openQuickActionModal();
+                }
+            }
+        ];
+
+        // 1. COLLECT SYSTEM ACTIONS
+        if (scope === 'all' || scope === 'system') {
+            systemActions.forEach(a => {
+                if (!q || a.title.toLowerCase().includes(q) || a.subtitle.toLowerCase().includes(q) || a.tag.toLowerCase().includes(q)) {
+                    items.push(a);
+                }
+            });
+        }
+
+        // 2. COLLECT SCRIPTS
+        if (scope === 'all' || scope === 'scripts') {
+            (allScriptsData || []).forEach(s => {
+                const match = !q || s.name.toLowerCase().includes(q) || (s.category || '').toLowerCase().includes(q) || (s.script || '').toLowerCase().includes(q);
+                if (match) {
+                    let scriptIcon = 'fa-solid fa-code';
+                    if (s.icon) {
+                        scriptIcon = s.icon.includes(' ') ? s.icon : (s.icon.startsWith('fa-') ? `fa-solid ${s.icon}` : s.icon);
+                    }
+                    items.push({
+                        type: 'script',
+                        group: 'Automation Scripts',
+                        title: s.name,
+                        subtitle: `${s.category} • ${s.script} • ${s.schedule_str || 'Manual'}`,
+                        icon: scriptIcon,
+                        iconBg: 'rgba(6, 182, 212, 0.18)',
+                        iconColor: '#06b6d4',
+                        tag: (s.category || 'SCRIPT').toUpperCase(),
+                        badge: s.is_running ? 'RUNNING' : 'RUN NOW',
+                        action: () => {
+                            closeCommandPalette();
+                            runNow(s.id);
+                        }
+                    });
+                }
+            });
+        }
+
+        // 3. COLLECT SERVICES & CONTAINERS
+        if (scope === 'all' || scope === 'services') {
+            (homelabServicesData || []).forEach(srv => {
+                const match = !q || srv.name.toLowerCase().includes(q) || (srv.description || '').toLowerCase().includes(q) || (srv.type || '').toLowerCase().includes(q);
+                if (match) {
+                    items.push({
+                        type: 'service',
+                        group: 'Services & Containers',
+                        title: srv.name,
+                        subtitle: `${srv.type || 'Container'} • Port ${srv.port || 'Native'} • ${srv.status || 'Active'}`,
+                        icon: 'fa-solid fa-server',
+                        iconBg: 'rgba(16, 185, 129, 0.18)',
+                        iconColor: '#10b981',
+                        tag: (srv.type || 'SERVICE').toUpperCase(),
+                        badge: 'VIEW',
+                        action: () => {
+                            closeCommandPalette();
+                            switchCategory('Services & Dockge');
+                        }
+                    });
+                }
+            });
+        }
+
+        // 4. COLLECT NAVIGATION TABS (SANITIZED PUBLIC TABS)
+        if (scope === 'all') {
+            const tabs = [
+                { id: 'all', label: 'All Dashboard Overview', icon: 'fa-solid fa-layer-group', color: 'var(--accent-cyan)' },
+                { id: 'Maintenance', label: 'Maintenance Scripts', icon: 'fa-solid fa-wrench', color: '#f59e0b' },
+                { id: 'Backups', label: 'Backups & Snapshots', icon: 'fa-solid fa-box-archive', color: '#10b981' },
+                { id: 'Services & Dockge', label: 'Services & Containers', icon: 'fa-solid fa-server', color: '#3b82f6' },
+                { id: 'smart-storage-tab', label: 'SMART Storage Drives', icon: 'fa-solid fa-hard-drive', color: '#06b6d4' },
+                { id: 'pipelines-tab', label: 'Automation Pipelines', icon: 'fa-solid fa-bolt', color: '#eab308' },
+                { id: 'ai-tab', label: 'AI Ops Copilot', icon: 'fa-solid fa-brain', color: '#ec4899' },
+                { id: 'system-tab', label: 'Settings & System Tab', icon: 'fa-solid fa-gear', color: '#2997ff' },
+                { id: 'Execution History', label: 'Execution History Timeline', icon: 'fa-solid fa-chart-line', color: '#34d399' }
+            ];
+
+            tabs.forEach(t => {
+                if (!q || t.label.toLowerCase().includes(q)) {
+                    items.push({
+                        type: 'tab',
+                        group: 'Quick Navigation',
+                        title: `Switch to: ${t.label}`,
+                        subtitle: `Dashboard Section • Instant switch`,
+                        icon: t.icon,
+                        iconBg: 'rgba(255, 255, 255, 0.08)',
+                        iconColor: t.color,
+                        tag: 'TAB',
+                        badge: 'GOTO',
+                        action: () => {
+                            closeCommandPalette();
+                            switchCategory(t.id);
+                        }
+                    });
+                }
+            });
+        }
+
+        paletteCurrentItems = items;
+        paletteSelectedIdx = 0;
+
+        if (items.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="palette-empty-state">
+                    <div class="palette-empty-icon-wrap">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <div class="palette-empty-title">No matching results for "${escapeHtml(q)}"</div>
+                    <div class="palette-empty-sub">Try switching filter scope with <kbd class="spotlight-kbd">TAB</kbd> or typing another keyword.</div>
+                </div>
+            `;
+            return;
+        }
+
+        renderPaletteItemsHTML();
+    }
+    window.handlePaletteSearch = handlePaletteSearch;
+
+    function renderPaletteItemsHTML() {
+        const resultsContainer = document.getElementById('paletteResults');
+        if (!resultsContainer) return;
+
+        let html = '';
+        let lastGroup = null;
+
+        paletteCurrentItems.forEach((item, idx) => {
+            if (item.group && item.group !== lastGroup) {
+                lastGroup = item.group;
+                html += `
+                    <div class="palette-group-header">
+                        <span class="palette-group-title">${escapeHtml(item.group)}</span>
+                    </div>
+                `;
+            }
+
+            const isSelected = idx === paletteSelectedIdx;
+            html += `
+                <div class="palette-item ${isSelected ? 'selected' : ''}" data-idx="${idx}" onclick="executePaletteItem(${idx})" onmouseenter="paletteSelectedIdx = ${idx}; updatePaletteSelectionVisual();">
+                    <div class="palette-item-left">
+                        <div class="palette-item-icon" style="background: ${item.iconBg}; color: ${item.iconColor};">
+                            <i class="${item.icon}"></i>
+                        </div>
+                        <div class="palette-item-text">
+                            <span class="palette-item-title">
+                                ${escapeHtml(item.title)}
+                                ${item.tag ? `<span class="palette-item-tag">${escapeHtml(item.tag)}</span>` : ''}
+                            </span>
+                            <span class="palette-item-subtitle">${escapeHtml(item.subtitle)}</span>
+                        </div>
+                    </div>
+                    <div class="palette-item-right">
+                        ${item.isHoldReboot ? `
+                            <button class="hold-reboot-btn" onpointerdown="startHoldReboot(event, this); event.stopPropagation();" onpointerup="cancelHoldReboot(this); event.stopPropagation();" onpointerleave="cancelHoldReboot(this);" oncontextmenu="event.preventDefault()" style="height: 30px; padding: 0 0.85rem; font-size: 0.78rem;">
+                                <div class="hold-fill"></div>
+                                <span class="hold-text"><i class="fa-solid fa-power-off"></i> Hold to Reboot</span>
+                            </button>
+                        ` : `
+                            <span class="palette-action-badge ${isSelected ? 'active' : ''}">${escapeHtml(item.badge || '↵')}</span>
+                        `}
+                    </div>
+                </div>
+            `;
+        });
+
+        resultsContainer.innerHTML = html;
+
+        const selectedEl = resultsContainer.querySelector('.palette-item.selected');
+        if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest' });
+    }
+    window.renderPaletteItemsHTML = renderPaletteItemsHTML;
+
+    function updatePaletteSelectionVisual() {
+        const items = document.querySelectorAll('#paletteResults .palette-item');
+        items.forEach((el, idx) => {
+            const isSelected = idx === paletteSelectedIdx;
+            el.classList.toggle('selected', isSelected);
+            const badge = el.querySelector('.palette-action-badge');
+            if (badge) badge.classList.toggle('active', isSelected);
+        });
+    }
+
+    function executePaletteItem(idx) {
+        const item = paletteCurrentItems[idx];
+        if (item && typeof item.action === 'function') {
+            playTactileTick(600, 0.02);
+            item.action();
+        }
+    }
+    window.executePaletteItem = executePaletteItem;
+
+    function handlePaletteKeydown(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const currIdx = PALETTE_SCOPES.indexOf(currentPaletteScope);
+            const nextIdx = (currIdx + 1) % PALETTE_SCOPES.length;
+            setPaletteScope(PALETTE_SCOPES[nextIdx]);
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (paletteCurrentItems.length > 0) {
+                paletteSelectedIdx = (paletteSelectedIdx + 1) % paletteCurrentItems.length;
+                updatePaletteSelectionVisual();
+                const selectedEl = document.querySelectorAll('#paletteResults .palette-item')[paletteSelectedIdx];
+                if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest' });
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (paletteCurrentItems.length > 0) {
+                paletteSelectedIdx = (paletteSelectedIdx - 1 + paletteCurrentItems.length) % paletteCurrentItems.length;
+                updatePaletteSelectionVisual();
+                const selectedEl = document.querySelectorAll('#paletteResults .palette-item')[paletteSelectedIdx];
+                if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest' });
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            executePaletteItem(paletteSelectedIdx);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            closeCommandPalette();
+        }
+    }
+    window.handlePaletteKeydown = handlePaletteKeydown;
+
+    // Global Command Palette Shortcut Listener (Ctrl+K or '/')
+    document.addEventListener('keydown', (e) => {
+        const isSearchShortcut = e.key === '/' || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k');
+        if (isSearchShortcut && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            openCommandPalette('all');
+        } else if (e.key === 'Escape' && document.getElementById('cmdPalette')?.classList.contains('open')) {
+            e.preventDefault();
+            closeCommandPalette();
+        }
+    });
+
+    // Initialize pill and audio state on page load
+    setTimeout(() => {
+        if (typeof updateTabSpring === 'function') updateTabSpring();
+        if (typeof updateSoundUIState === 'function') updateSoundUIState();
+    }, 120);
+

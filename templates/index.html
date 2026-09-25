@@ -53,6 +53,10 @@
                         <i class="fa-solid fa-gear" style="color: #2997ff;"></i>
                         <strong style="color: #f5f5f7;">Settings</strong>
                     </div>
+                    <div class="tasks-pill pill-search" id="header-search-btn" title="Search scripts, services, containers, quick actions... (Ctrl+K)" onclick="openCommandPalette()">
+                        <i class="fa-solid fa-magnifying-glass" style="color: var(--accent-cyan);"></i>
+                        <strong style="color: #67e8f9;">Search</strong>
+                    </div>
                     <div class="tasks-pill pill-tasks" title="Click to view all active running background tasks" onclick="openActiveTasksModal()">
                         <i class="fa-solid fa-bars-progress" style="color:var(--accent-cyan)"></i>
                         <strong id="header-active-tasks">Active Tasks: 0</strong>
@@ -85,7 +89,7 @@
             <i class="fa-solid fa-magnifying-glass"></i>
         </div>
         <div style="flex: 1; position: relative; display: flex; align-items: center;">
-            <input type="text" id="global-search-input" placeholder="Search Python scripts, Dockge containers, services, and ports... (Press '/' to focus)" oninput="filterCardsInstant(this.value)" style="width: 100%; padding: 0.55rem 3.2rem 0.55rem 0; background: transparent; border: none; color: var(--text-primary); font-size: 0.95rem; font-weight: 500; outline: none; letter-spacing: -0.01em;">
+            <input type="text" id="global-search-input" placeholder="Search Python scripts, Dockge containers, services, and ports... (Press '/' or Ctrl+K)" oninput="filterCardsInstant(this.value)" style="width: 100%; padding: 0.55rem 3.2rem 0.55rem 0; background: transparent; border: none; color: var(--text-primary); font-size: 0.95rem; font-weight: 500; outline: none; letter-spacing: -0.01em;">
             <button id="search-clear-btn" onclick="clearGlobalSearch()" style="display: none; position: absolute; right: 2.8rem; width: 22px; height: 22px; border-radius: 50%; background: rgba(255, 255, 255, 0.15); border: none; color: #a1a1a6; cursor: pointer; font-size: 0.75rem; align-items: center; justify-content: center; padding: 0;" title="Clear search">
                 <i class="fa-solid fa-xmark"></i>
             </button>
@@ -95,7 +99,8 @@
 
     <!-- Category Filter Tabs with Color Accents & Group Dividers -->
     <div class="category-tabs">
-        <div class="category-tabs-inner">
+        <div class="category-tabs-inner" id="categoryTabsInner">
+            <div class="tab-spring-pill" id="tabSpringPill"></div>
             <button class="tab-btn active" onclick="switchCategory('all')"><i class="fa-solid fa-layer-group" style="color: var(--accent-cyan);"></i> All</button>
             <div class="tab-divider"></div>
             <button class="tab-btn" onclick="switchCategory('Maintenance')"><i class="fa-solid fa-wrench" style="color: #f59e0b;"></i> Maintenance</button>
@@ -285,9 +290,19 @@
                     Server maintenance, configuration backups, phone alert webhooks, and UI theme customization.
                 </p>
             </div>
-            <button class="btn btn-secondary" onclick="openThemeModal()" style="padding: 0.6rem 1.1rem; border-radius: 12px; font-weight: 700; border-color: rgba(236, 72, 153, 0.4); background: rgba(236, 72, 153, 0.12); color: #fff;">
-                <i class="fa-solid fa-palette" style="color: #ec4899;"></i> Customize Theme & Shaders
-            </button>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-color); padding: 0.45rem 0.85rem; border-radius: 12px;">
+                    <i class="fa-solid fa-volume-high" id="sound-toggle-icon" style="color: var(--accent-primary); font-size: 1rem;"></i>
+                    <label class="switch" style="margin: 0; width: 36px; height: 20px;">
+                        <input type="checkbox" id="sound-effects-toggle" checked onchange="toggleSoundEffects(this.checked)">
+                        <span class="slider round"></span>
+                    </label>
+                    <span style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;" id="sound-toggle-text">Sound FX</span>
+                </div>
+                <button class="btn btn-secondary" onclick="openThemeModal()" style="padding: 0.6rem 1.1rem; border-radius: 12px; font-weight: 700; border-color: rgba(236, 72, 153, 0.4); background: rgba(236, 72, 153, 0.12); color: #fff;">
+                    <i class="fa-solid fa-palette" style="color: #ec4899;"></i> Customize Theme & Shaders
+                </button>
+            </div>
         </div>
 
         <!-- Automated Self-Healing Watchdog Panel -->
@@ -777,6 +792,56 @@ Ask your Ops Copilot anything about your Linux server, crontabs, Docker configs,
             <div id="docker-df-container">
                 <div style="color:var(--text-secondary); font-size:0.85rem;"><i class="fa-solid fa-spinner fa-spin"></i> Loading Docker storage telemetry...</div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Frequency-Gated Spotlight Command & Settings Center (0ms) -->
+<div class="palette-backdrop" id="paletteBackdrop" onclick="closeCommandPalette()"></div>
+<div class="command-palette" id="cmdPalette" role="dialog" aria-modal="true" aria-label="Search & Command Palette">
+    <div class="palette-header">
+        <div class="palette-search-icon-box">
+            <i class="fa-solid fa-magnifying-glass palette-search-icon"></i>
+        </div>
+        <input type="text" class="palette-input" id="paletteInput" placeholder="Search Python scripts, containers, actions, or jump to tabs... (Ctrl+K)" autocomplete="off" spellcheck="false" oninput="handlePaletteSearch(this.value)" onkeydown="handlePaletteKeydown(event)">
+        <div class="palette-header-badges">
+            <button class="palette-clear-btn" id="paletteClearBtn" onclick="clearPaletteInput()" title="Clear">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <span class="spotlight-kbd">ESC</span>
+        </div>
+    </div>
+
+    <!-- Scopes Filter Pills (Segmented Switcher) -->
+    <div class="palette-scopes-bar">
+        <button class="palette-scope-btn active" data-scope="all" onclick="setPaletteScope('all')">
+            <i class="fa-solid fa-bolt"></i> All
+        </button>
+        <button class="palette-scope-btn" data-scope="scripts" onclick="setPaletteScope('scripts')">
+            <i class="fa-brands fa-python"></i> Scripts
+        </button>
+        <button class="palette-scope-btn" data-scope="services" onclick="setPaletteScope('services')">
+            <i class="fa-solid fa-server"></i> Services & Dockge
+        </button>
+        <button class="palette-scope-btn" data-scope="system" onclick="setPaletteScope('system')">
+            <i class="fa-solid fa-sliders"></i> Actions
+        </button>
+    </div>
+
+    <div class="palette-results" id="paletteResults">
+        <!-- Dynamically populated -->
+    </div>
+
+    <div class="palette-footer">
+        <div class="palette-hints">
+            <span><kbd class="spotlight-kbd">↑</kbd><kbd class="spotlight-kbd">↓</kbd> Navigate</span>
+            <span><kbd class="spotlight-kbd">↵</kbd> Select</span>
+            <span><kbd class="spotlight-kbd">TAB</kbd> Next Filter</span>
+            <span><kbd class="spotlight-kbd">ESC</kbd> Close</span>
+        </div>
+        <div class="palette-mode-tag">
+            <span class="palette-pulse-dot"></span>
+            <span>Raycast Core • 0ms</span>
         </div>
     </div>
 </div>
